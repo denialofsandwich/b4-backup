@@ -65,4 +65,4 @@ default_targets:
 ## Documentation
 
 TODO: Deploy docs and update link
-**[You can access the documentation here](https://example.com)**
+You can read the undeployed docs in the `docs` folder.
