@@ -4,7 +4,7 @@ on:
     types: [published]
 
 jobs:
-  ci:
+  test_and_build:
     strategy:
       fail-fast: false
       matrix:
@@ -46,8 +46,6 @@ jobs:
 
   pypi-publish:
     runs-on: ubuntu-latest
-    needs:
-      - release-build
     permissions:
       id-token: write
     steps:
