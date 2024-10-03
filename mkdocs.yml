@@ -1,0 +1,102 @@
+site_name: B4, Better Btrfs Backups
+docs_dir: docs
+site_description: Docs for B4 backup
+use_directory_urls: false
+watch:
+  - b4_backup
+extra_css:
+  - css/code_select.css
+repo_name: b4_backup
+repo_url: https://github.com/denialofsandwich/b4-backup
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  icon:
+    logo: material/cloud-download
+    edit: material/pencil
+    view: material/eye
+    repo: material/github
+  features:
+    - navigation.instant
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: orange
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: amber
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+plugins:
+  - search:
+  - autorefs:
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://mkdocstrings.github.io/objects.inv
+            - https://mkdocstrings.github.io/griffe/objects.inv
+          options:
+            show_source: true
+            show_root_full_path: false
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: no
+            merge_init_into_class: true
+            separate_signature: yes
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - codehilite:
+      guess_lang: false
+  - admonition
+  - pymdownx.details
+  - extra
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Intro: index.md
+  - Installation: install.md
+  - Terminology: terminology.md
+  - Examples: examples.md
+  - Contribute: contribute.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Configuration: configuration.md
+      - Code reference: reference/code/

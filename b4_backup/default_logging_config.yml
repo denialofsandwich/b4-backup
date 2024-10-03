@@ -1,0 +1,25 @@
+version: 1
+disable_existing_loggers: False
+formatters:
+  default:
+    format: "%(asctime)s %(levelname)s %(name)s: %(message)s"
+  rich_formatter:
+    format: "%(message)s"
+    datefmt: "[%X]"
+handlers:
+  default:
+    level: "NOTSET"
+    formatter: "default"
+    class: "logging.StreamHandler"
+    stream: "ext://sys.stderr"
+  rich:
+    (): "b4_backup.utils.rich_handler"
+    level: "NOTSET"
+    formatter: "rich_formatter"
+loggers:
+  root:
+    handlers:
+      - "rich"
+    level: "INFO"
+  paramiko:
+    level: "INFO"

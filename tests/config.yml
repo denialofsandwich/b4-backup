@@ -1,0 +1,57 @@
+---
+backup_targets:
+  _default:
+    destination: /opt/backup
+    src_retention:
+      _default:
+        all: "1"
+    dst_retention:
+      _default:
+        all: "2"
+      auto:
+        1days: 1months
+        1weeks: 1years
+        1months: forever
+    subvolume_rules:
+      /test:
+        backup_strategy: SOURCE_ONLY
+        fallback_strategy: DROP
+      ignored:
+        backup_strategy: IGNORE
+  localhost/home:
+    source: ssh://root@localhost/home
+    src_retention:
+      test:
+        all: "3"
+      test_clean:
+        all: "2"
+    dst_retention:
+      test:
+        all: "4"
+      auto:
+        all: "4"
+      test_clean:
+        1hour: "1day"
+    subvolume_rules:
+      /new:
+        fallback_strategy: NEW
+      /keep:
+        fallback_strategy: KEEP
+      wrong:
+        fallback_strategy: KEEP
+      also_wrong:
+        fallback_strategy: DROP
+
+  localhost/root:
+    source: /
+    if_dst_dir_not_found: FAIL
+  localhost/mnt:
+    source: /mnt
+default_targets: []
+timezone: utc
+logging:
+  loggers:
+    root:
+      level: INFO
+      handlers:
+        - rich

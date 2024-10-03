@@ -1,0 +1,29 @@
+---
+backup_targets:
+  _default:
+    subvolume_rules:
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        ignore: true
+    src_retention:
+      auto:
+        all: "7days"
+    dst_retention:
+      auto:
+        1day: 1month
+        1week: 1year
+        1month: infinity
+  main.example.com/home:
+    source: ssh://root@main.example.com/home
+    dst_retention:
+      auto:
+        all: 3days
+  main.example.com/b:
+    source: ssh://root@main.example.com:990/b
+  localhost/test:
+    source: ssh://root@localhost/opt/test
+  local/data:
+    source: /opt/data
+logging:
+  loggers:
+    root:
+      level: INFO

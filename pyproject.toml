@@ -1,0 +1,119 @@
+[tool.poetry]
+name = "b4-backup"
+version = "0.1.0"
+description = "A backup manager using btrfs for incremental local and remote backups"
+authors = ["René Fa <farene1996+github@gmail.com>"]
+readme = 'readme.md'
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: System :: Archiving :: Mirroring",
+    "Topic :: System :: Archiving :: Backup",
+    "Topic :: System :: Archiving",
+    "Topic :: System",
+    "Natural Language :: English",
+    "Typing :: Typed",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License"
+]
+
+[tool.poetry.scripts]
+b4 = "b4_backup.cli:app"
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+rich = "^13.4.2"
+omegaconf = "^2.3.0"
+typer = "^0.12.3"
+paramiko = "^3.2.0"
+arrow = "^1.2.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+pytest-sugar = "^1.0.0"
+pytest-cov = "^5.0.0"
+pre-commit = "^3.3.3"
+isort = "^5.10.1"
+black = "^24.2.0"
+mkdocs-material = "^9.1.16"
+mkdocstrings = "^0.26.1"
+mkdocs-autorefs = "^1.0.1"
+mkdocstrings-python = "^1.1.2"
+mkdocs-literate-nav = "^0.6.0"
+ruff = "^0.6.8"
+pyyaml = "^6.0.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+lint.select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "D",   # pydocstyle
+    "I",   # isort
+    "N",   # pep8-naming
+    "F",   # Pyflakes
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit
+    "PT",  # flake8-pytest-style
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "PIE", # flake8-pie
+    "PTH", # flake8-use-pathlib
+    "T20", # flake8-print
+    "PLC", # Pylint
+    "PLE", # Pylint
+    "PLR", # Pylint
+    "PLW", # Pylint
+    "C90", # mccabe
+    "TRY", # tryceratops
+    "UP",  # Pyupgrade
+]
+lint.ignore = [
+    "E501",    # line too long, handled by black
+    "B008",    # No function call as default argument, required by typer
+    "D212",    # Pydocstyle redundant error
+    "D205",    # Pydocstyle so it doesn't complain on missing summary in trivial properties
+    "S101",    # Use of assert, needed for unittests
+    "PLR2004", # Too many false positives
+    "TRY003",  # Too long Exception message, it complains if you use more than one word. Pointless
+    "D100",    # Docstring in module, redundant since every class is in it's own file
+    "B905",    # Use strict in zip, not available in py3.9
+    "PLR0913", # Too many arguments to function call
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["D", "PLR2004", "S105", "S106", "S108", "T20", "S605"]
+"docs/*" = ["T20"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.coverage.run]
+omit = [
+    "__main__.py",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov-branch --cov=b4_backup"
+testpaths = [
+    "tests",
+]

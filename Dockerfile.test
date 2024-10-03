@@ -1,0 +1,47 @@
+FROM python:3.9-slim as base
+ENV PYTHONUNBUFFERED=true
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN adduser \
+    --disabled-password \
+    --uid 4711 \
+    worker \
+    && mkdir /code /opt/poetry \
+    && chown worker:worker /code
+WORKDIR /code
+
+ENV POETRY_HOME=/opt/poetry
+# ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV PATH="$POETRY_HOME/bin:$PATH"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl openssh-server vim-tiny sudo btrfs-progs \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m pip install --upgrade pip \
+    && curl -sSL https://install.python-poetry.org | python3 -
+
+# Configure SSHD.
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+    && mkdir /var/run/sshd \
+    && bash -c 'install -m755 <(printf "#!/bin/sh\nexit 0") /usr/sbin/policy-rc.d' \
+    && ex +'%s/^#\zeListenAddress/\1/g' -scwq /etc/ssh/sshd_config \
+    && ex +'%s/^#\zeHostKey .*ssh_host_.*_key/\1/g' -scwq /etc/ssh/sshd_config \
+    && RUNLEVEL=1 dpkg-reconfigure openssh-server \
+    && ssh-keygen -A -v \
+    && update-rc.d ssh defaults \
+    && ssh-keygen -f '/root/.ssh/id_rsa' -q -N '' \
+    && bash -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'
+
+# USER worker
+COPY ["pyproject.toml", "poetry.lock", "./"]
+
+# --only main
+RUN poetry install --no-interaction \
+    && rm -rf /root/.cache/pypoetry/cache \
+    && rm -rf /root/.cache/pypoetry/artifacts
+
+RUN rm pyproject.toml poetry.lock
+
+ENTRYPOINT ["bash", "-c"]
+CMD ["/usr/sbin/sshd; poetry install; poetry run pytest --cov-report term-missing --cov=b4_backup" ]
