@@ -1,4 +1,4 @@
-name: CI
+name: Automatic tests
 on:
   push:
     branches: [main]
@@ -23,5 +23,9 @@ jobs:
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
-      - name: View poetry --help
-        run: poetry --help
+      - name: Install dependencies
+        run: poetry install
+      - name: Run pre-commit
+        run: poetry run pre-commit run --all
+      - name: Run tests
+        run: poetry run pytest
