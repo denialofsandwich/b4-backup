@@ -266,21 +266,8 @@ def dump_config(ctx: typer.Context):
     rich.print(config)
 
 
-##### Getting serious
-# TODO: Make repo public
-
-##### CI/CD
-# TODO: Build pipeline
-# Steps:
-#   - Test:
-#       - python:test [py312]
-#       - pre-commit
-#   - Release:
-#       - python:release
-#   - Deploy:
-#       - docs:deploy
-
 # TODO: Fancy readme.md
+# Add badges from test result, pypi release, etc
 # TODO: Fancy logo
 # Logo hierdran anlehnen: https://wiki.ubuntuusers.de/Btrfs-Dateisystem/
 

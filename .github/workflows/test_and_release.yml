@@ -1,0 +1,166 @@
+name: Automatic tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  python_base:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install poetry==1.8.3
+      - run: poetry config virtualenvs.in-project true
+      - name: Setup caching
+        uses: actions/cache@v4
+        with:
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install
+
+  test_python:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    runs-on: ubuntu-latest
+    needs:
+      - python_base
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install poetry==1.8.3
+      - run: poetry config virtualenvs.in-project true
+      - name: Setup caching
+        uses: actions/cache@v4
+        with:
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov-report=xml --cov-report=html
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.python-version }}
+          path: junit/test-results-${{ matrix.python-version }}.xml
+        if: ${{ always() }}
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    needs:
+      - python_base
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install pre-commit
+        run: pip install pre-commit poetry==1.8.3
+      - name: Run pre-commit
+        run: pre-commit run --all
+
+  build_python:
+    runs-on: ubuntu-latest
+    needs:
+      - test_python
+      - pre-commit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install poetry==1.8.3
+      - run: poetry config virtualenvs.in-project true
+      - name: Setup caching
+        uses: actions/cache@v4
+        with:
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Build package
+        run: poetry build
+      - name: Upload package artifacts
+        if: github.event_name == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+  deploy_docs:
+    runs-on: ubuntu-latest
+    needs:
+      - build_python
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install poetry==1.8.3
+      - run: poetry config virtualenvs.in-project true
+      - name: Setup venv cache
+        uses: actions/cache@v4
+        with:
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install
+
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+      - uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+      - run: poetry run mkdocs gh-deploy --force
+
+  release_python:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs:
+      - build_python
+    permissions:
+      id-token: write
+    steps:
+      - name: Retrieve package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1.10
+        with:
+          name: release-dists
+          path: dist/

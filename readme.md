@@ -61,6 +61,8 @@ default_targets:
   - nextcloud.example.com
 ```
 
+TODO: Add example CLI commands
+
 
 ## Documentation
 
