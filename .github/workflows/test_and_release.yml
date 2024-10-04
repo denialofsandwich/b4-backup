@@ -86,8 +86,7 @@ jobs:
   build_python:
     runs-on: ubuntu-latest
     needs:
-      - test_python
-      - pre-commit
+      - python_base
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -114,9 +113,12 @@ jobs:
           path: dist/
 
   deploy_docs:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     needs:
-      - build_python
+      - python_base
+      - test_python
+      - pre-commit
     steps:
       - uses: actions/checkout@v4
       - name: Configure Git Credentials
@@ -150,10 +152,16 @@ jobs:
       - run: poetry run mkdocs gh-deploy --force
 
   release_python:
-    if: github.event_name == 'release'
+    if: startsWith(github.ref, 'refs/tags/')
+    # if: github.event_name == 'release'
     runs-on: ubuntu-latest
     needs:
-      - build_python
+      - python_base
+      - test_python
+      - pre-commit
+    environment:
+      name: main
+      url: https://pypi.org/p/b4-backup
     permissions:
       id-token: write
     steps:

@@ -267,6 +267,8 @@ def dump_config(ctx: typer.Context):
     rich.print(config)
 
 
+# TODO: Is it possible to show Test coverage in PR?
+
 # TODO: Fancy readme.md
 # Add badges from test result, pypi release, etc
 # TODO: Fancy logo
