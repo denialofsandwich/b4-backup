@@ -144,6 +144,9 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
+      - run: poetry run python docs/gen_reference_code.py
+      - run: poetry run python docs/gen_reference_config.py
+      - run: poetry run typer b4_backup/__main__.py utils docs --name b4 --title "CLI reference" --output docs/reference/cli.md
       - run: poetry run mkdocs gh-deploy --force
 
   release_python:

@@ -3,7 +3,7 @@ backup_targets:
   _default:
     subvolume_rules:
       rootfs/var/lib/docker/btrfs/subvolumes:
-        ignore: true
+        backup_strategy: IGNORE
     src_retention:
       auto:
         all: "7days"
