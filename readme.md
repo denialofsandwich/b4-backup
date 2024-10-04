@@ -1,4 +1,4 @@
-# B4, Better Btrfs Backups
+# B4, Btrfs Backups But Better
 
 B4 is another tool for creating incremental backups using btrfs subvolumes.
 
@@ -20,15 +20,12 @@ It comes with the following features:
 
 ## 🚀 Getting Started
 
-Take a look at the installation page to get started.
-Once installed, you might take a look at the example use cases to get a starting point.
-
-TODO: Add installation page, if docs deployed
+Take a look at the [installation guide](https://denialofsandwich.github.io/b4-backup/install.html) to get started.
+Once installed, you might take a look at the [example use cases](https://denialofsandwich.github.io/b4-backup/examples.html) to get a starting point.
 
 ## Example
 
-This is just an example to explain the most important features. More examples can be found here:
-TODO: Add examples docpage
+This is just an example to explain the most important features. [More examples can be found here](https://denialofsandwich.github.io/b4-backup/examples.html)
 
 Let's say we want to backup a server with a nextcloud instance on it. The btrfs subvolume we want to backup is `/opt/nextcloud`. This is where we store all nextcloud-related data.
 
@@ -61,10 +58,12 @@ default_targets:
   - nextcloud.example.com
 ```
 
-TODO: Add example CLI commands
+To actually create a backup, you can use the following command:
+```bash
+b4 backup
+```
 
 
 ## Documentation
 
-TODO: Deploy docs and update link
-You can read the undeployed docs in the `docs` folder.
+[The full documentation can be found here](https://denialofsandwich.github.io/b4-backup/)

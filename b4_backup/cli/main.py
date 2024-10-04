@@ -204,7 +204,8 @@ def restore(
         autocompletion=complete_target,
         callback=validate_target,
     ),
-    strategy: TargetRestoreStrategy | None = typer.Option(
+    strategy: TargetRestoreStrategy
+    | None = typer.Option(
         None,
         help="Restore strategy or procedure to apply",
     ),
