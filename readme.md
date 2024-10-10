@@ -2,11 +2,11 @@
 
 <p align="center">
     <a href="https://github.com/denialofsandwich/b4-backup/actions/workflows/daily-tests.yml">
-        <img src="https://img.shields.io/github/actions/workflow/status/denialofsandwich/b4-backup/test_and_release.yml?label=pipeline"
-            alt="Daily Tests Status"></a>
+        <img src="https://img.shields.io/github/actions/workflow/status/denialofsandwich/b4-backup/test_and_release.yml?label=pipeline"></a>
     <a href="https://coveralls.io/github/denialofsandwich/b4-backup">
-        <img src="https://img.shields.io/coveralls/github/denialofsandwich/b4-backup"
-            alt="Code Coverage"></a>
+        <img src="https://denialofsandwich.github.io/b4-backup/badges/python.svg"></a>
+    <a href="https://coveralls.io/github/denialofsandwich/b4-backup">
+        <img src="https://denialofsandwich.github.io/b4-backup/badges/coverage.svg"></a>
 </p>
 
 B4 is another tool for creating incremental backups using btrfs subvolumes.
