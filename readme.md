@@ -1,5 +1,14 @@
 # B4, Btrfs Backups But Better
 
+<p align="center">
+    <a href="https://github.com/denialofsandwich/b4-backup/actions/workflows/daily-tests.yml">
+        <img src="https://img.shields.io/github/actions/workflow/status/denialofsandwich/b4-backup/test_and_release.yml?label=pipeline"
+            alt="Daily Tests Status"></a>
+    <a href="https://coveralls.io/github/denialofsandwich/b4-backup">
+        <img src="https://img.shields.io/coveralls/github/denialofsandwich/b4-backup"
+            alt="Code Coverage"></a>
+</p>
+
 B4 is another tool for creating incremental backups using btrfs subvolumes.
 
 

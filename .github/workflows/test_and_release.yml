@@ -59,14 +59,13 @@ jobs:
         run: poetry install
 
       - name: Run tests
-        run: poetry run pytest --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov-report=xml --cov-report=html
+        run: poetry run pytest --cov-report=term --cov-report=html
 
-      - name: Upload pytest test results
+      - name: Upload pytest test coverage
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results-${{ matrix.python-version }}
-          path: junit/test-results-${{ matrix.python-version }}.xml
-        if: ${{ always() }}
+          path: htmlcov/
 
   pre-commit:
     runs-on: ubuntu-latest
@@ -121,6 +120,11 @@ jobs:
       - pre-commit
     steps:
       - uses: actions/checkout@v4
+      - name: Download 3.12 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-results-3.12
+          path: htmlcov/v3.12
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
@@ -146,6 +150,7 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
+      - run: poetry run python docs/gen_badges.py
       - run: poetry run python docs/gen_reference_code.py
       - run: poetry run python docs/gen_reference_config.py
       - run: poetry run typer b4_backup/__main__.py utils docs --name b4 --title "CLI reference" --output docs/reference/cli.md

@@ -155,3 +155,4 @@ cython_debug/
 # Test files
 Untitled*.ipynb
 b4_backup.yml
+docs/badges/
