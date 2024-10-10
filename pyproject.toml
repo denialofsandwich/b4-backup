@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "b4-backup"
-version = "0.2.1"
+version = "1.0.0a0"
 description = "A backup manager using btrfs for incremental local and remote backups"
 authors = ["René Fa <farene1996+github@gmail.com>"]
 readme = 'readme.md'

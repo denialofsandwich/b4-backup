@@ -29,7 +29,7 @@ def _create_badge(title: str, value: str, color: str):
 
 
 def _create_badge_coverage(value: int):
-    ramp = max(50, min(100, value)) / 100 * 0.33
+    ramp = max(50, min(100, value)) / 100 * 0.31
     r, g, b = colorsys.hsv_to_rgb(ramp, 0.93, 0.77)
     _create_badge("coverage", f"{value}%", f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}")
 

@@ -267,23 +267,13 @@ def dump_config(ctx: typer.Context):
     rich.print(config)
 
 
-# TODO: Is it possible to show Test coverage in PR?
+# A collection of stuff I would like to improve
 
-# TODO: Fancy readme.md
-# Add badges from test result, pypi release, etc
-# TODO: Fancy logo
-# Logo hierdran anlehnen: https://wiki.ubuntuusers.de/Btrfs-Dateisystem/
-
-##### It's ready
-# TODO: poetry version major
-
-##### Future
-
-##### Documentation
+## Documentation
 # TODO: Docs
 # - Auto create links to reference and terminology
 
-##### Visual CLI and logging improvements
+## Visual CLI and logging improvements
 # TODO: rich print_log function
 #   - To optionally print logs like a standard rich.print()
 #   - Will be in a seperate logger. Maybe b4_backup.print

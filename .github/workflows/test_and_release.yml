@@ -120,11 +120,14 @@ jobs:
       - pre-commit
     steps:
       - uses: actions/checkout@v4
+
+      # That's an ugly solution, but I need to copy this block for every supported python version
       - name: Download 3.12 artifacts
         uses: actions/download-artifact@v4
         with:
           name: pytest-results-3.12
           path: htmlcov/v3.12
+
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
