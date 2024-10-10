@@ -1,11 +1,11 @@
 # B4, Btrfs Backups But Better
 
 <p align="center">
-    <a href="https://github.com/denialofsandwich/b4-backup/actions/workflows/daily-tests.yml">
+    <a href="https://github.com/denialofsandwich/b4-backup/actions/workflows/test_and_release.yml">
         <img src="https://img.shields.io/github/actions/workflow/status/denialofsandwich/b4-backup/test_and_release.yml?label=pipeline"></a>
-    <a href="https://coveralls.io/github/denialofsandwich/b4-backup">
+    <a href="https://pypi.org/project/b4-backup">
         <img src="https://denialofsandwich.github.io/b4-backup/badges/python.svg"></a>
-    <a href="https://coveralls.io/github/denialofsandwich/b4-backup">
+    <a href="https://denialofsandwich.github.io/b4-backup/htmlcov/v3.13">
         <img src="https://denialofsandwich.github.io/b4-backup/badges/coverage.svg"></a>
 </p>
 

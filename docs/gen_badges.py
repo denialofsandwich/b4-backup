@@ -29,20 +29,21 @@ def _create_badge(title: str, value: str, color: str):
 
 
 def _create_badge_coverage(value: int):
-    ramp = max(50, min(100, value)) / 100 * 0.31
+    ramp = max(50, min(100, value)) / 100 * 0.30
     r, g, b = colorsys.hsv_to_rgb(ramp, 0.93, 0.77)
     _create_badge("coverage", f"{value}%", f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}")
 
 
 def _create_badge_versions(versions: list[str]):
-    _create_badge("python", " | ".join(versions), "blue")
+    _create_badge("python", " | ".join(sorted(versions)), "blue")
 
 
 versions = []
-for path in Path("htmlcov").glob("*"):
+coverage = []
+for path in Path("docs/htmlcov").glob("*"):
     print(path)
     versions.append(path.name[1:])
-    coverage = _extract_coverage((path / "index.html").read_text())
-    _create_badge_coverage(coverage)
+    coverage.append(_extract_coverage((path / "index.html").read_text()))
 
+_create_badge_coverage(int(sum(coverage) / len(coverage)))
 _create_badge_versions(versions)
