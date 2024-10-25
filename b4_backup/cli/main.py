@@ -269,6 +269,11 @@ def dump_config(ctx: typer.Context):
 
 # A collection of stuff I would like to improve
 
+## Features
+# TODO: pre/post backup hooks
+#   - Option to execute code before and after an update
+#     Would be handy for enabling maintanance mode during an update
+
 ## Documentation
 # TODO: Docs
 # - Auto create links to reference and terminology
