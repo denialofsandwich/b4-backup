@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Type
 from unittest.mock import MagicMock, call
 
 import paramiko
@@ -105,7 +106,7 @@ def test_url_from_url__invalid_url(test_input):
         ("ssh://main.example.com/b", connection.SSHConnection),
     ],
 )
-def test_connection_from_url(test_input: str, expected_type: type):
+def test_connection_from_url(test_input: str, expected_type: Type):
     # Act
     result = connection.Connection.from_url(test_input)
 
@@ -124,7 +125,7 @@ def test_open_ssh_connection(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(paramiko, "SSHClient", MagicMock())
 
     # Act
-    with connection.SSHConnection(host="example.com", location=Path("/test")):
+    with connection.SSHConnection(host="example.com", location=Path("/test")) as _con:
         ...
 
     # Assert

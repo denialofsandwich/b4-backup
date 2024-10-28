@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import Any
+from typing import Any, Union
 
 import click
 import typer
@@ -127,7 +127,9 @@ def load_config(
     return base_conf_instance
 
 
-def _parse_arg(param: click.Argument | click.Option, args: list[str]) -> Any | list[Any]:
+def _parse_arg(
+    param: Union[click.Argument, click.Option], args: list[str]
+) -> Union[Any, list[Any]]:
     args = list(args)
     parsed_arg = []
 
