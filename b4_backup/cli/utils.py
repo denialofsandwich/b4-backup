@@ -2,10 +2,10 @@ import json
 import logging
 import os
 import shlex
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import PurePath
-from typing import Generator
 
 import rich
 import typer

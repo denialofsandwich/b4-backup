@@ -1,7 +1,6 @@
 """Generate a yaml based on the default config defined in `config_schema.py`."""
 
 import pathlib
-from typing import Dict
 
 import yaml
 from omegaconf import OmegaConf
@@ -32,7 +31,7 @@ base_conf = OmegaConf.merge(
     OmegaConf.load(pathlib.Path(__file__).parent / "config_example.yml"),
 )
 
-config: Dict = OmegaConf.to_container(base_conf, resolve=True)  # type: ignore
+config: dict = OmegaConf.to_container(base_conf, resolve=True)  # type: ignore
 
 path = pathlib.Path("docs/reference/config.yml")
 path.parent.mkdir(parents=True, exist_ok=True)
