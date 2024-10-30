@@ -489,8 +489,7 @@ class B4Backup:
         snapshot_dates = [
             arrow.get(x.split("_")[0], self._timestamp_fmt)
             for x in snapshot_names
-            if x not in ignored_snapshots
-            and (not retention_name or x.split("_", maxsplit=1)[1] == retention_name)
+            if not retention_name or x.split("_", maxsplit=1)[1] == retention_name
         ]
 
         remaining_backups: set[arrow.Arrow] = set()
@@ -498,8 +497,12 @@ class B4Backup:
             remaining_backups.update(self._apply_retention_rule(interval, duration, snapshot_dates))
 
         return {
-            x.format(self._timestamp_fmt) + f"_{retention_name}" * (retention_name is not None)
-            for x in remaining_backups
+            item
+            for item in {
+                x.format(self._timestamp_fmt) + f"_{retention_name}" * (retention_name is not None)
+                for x in remaining_backups
+            }
+            if item not in ignored_snapshots
         }
 
     def _apply_retention_rule(

@@ -27,7 +27,7 @@ def validate_target(ctx: typer.Context, values: list[str]) -> list[str]:
     options = set(config.backup_targets) - {DEFAULT}
     for value in values:
         if value is not None and not any(PurePath(x).is_relative_to(value) for x in options):
-            raise typer.BadParameter(f"Unknown target. Available targets are: {','.join(options)}")
+            raise typer.BadParameter(f"Unknown target. Available targets are: {', '.join(options)}")
 
     return values
 

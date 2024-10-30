@@ -1041,7 +1041,6 @@ def test_retained_snapshots(monkeypatch: pytest.MonkeyPatch):
         "2023-08-06-22-59-37_auto",
         "2023-08-07-20-58-47_auto",
         "2023-08-07-21-11-21_auto",
-        "2023-08-07-22-59-21_auto",
     }
 
 
