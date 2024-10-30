@@ -51,6 +51,24 @@ def test_complete_target(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     ]
 
 
+class TestErrorHandler:
+    def test_empty(self):
+        # Arrange
+        handler = cli_utils.ErrorHandler()
+
+        # Act
+        handler.finalize()
+
+    def test_error(self):
+        # Arrange
+        handler = cli_utils.ErrorHandler()
+        handler.add(Exception())
+
+        # Act
+        with pytest.raises(ExceptionGroup):
+            handler.finalize()
+
+
 def test_error_handler__success():
     # Act / Assert
     with cli_utils.error_handler():

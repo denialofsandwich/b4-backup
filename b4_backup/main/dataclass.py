@@ -1,7 +1,8 @@
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from os import PathLike
 from pathlib import PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Generator, Iterable
+from typing import TYPE_CHECKING
 
 from b4_backup import exceptions
 from b4_backup.config_schema import DEFAULT, BackupTarget

@@ -63,6 +63,35 @@ def test_basic_cmd(
     assert result.exit_code == 0
 
 
+def test_backup__error_group(
+    config: BaseConfig,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    # Arrange
+    monkeypatch.setattr(utils, "load_config", MagicMock(return_value=config))
+    monkeypatch.setattr(
+        main,
+        "host_generator",
+        MagicMock(
+            return_value=[
+                (MagicMock(), None),
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        B4Backup,
+        "backup",
+        MagicMock(side_effect=[ExceptionGroup("GroupERROR", [Exception()])]),
+    )
+
+    # Act
+    result = runner.invoke(app, shlex.split("-c tests/config.yml backup --target localhost/home"))
+
+    # Assert
+    assert result.exit_code == 1
+    assert "GroupERROR" in result.stdout
+
+
 @pytest.mark.parametrize(
     "extra_args",
     [

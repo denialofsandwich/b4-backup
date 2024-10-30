@@ -50,13 +50,16 @@ def backup(
 
     b4_backup = B4Backup(config.timezone)
 
-    with error_handler():
+    with error_handler() as err_handler:
         snapshot_name = b4_backup.generate_snapshot_name(name)
 
         for src_host, dst_host in host_generator(
             target_choice, config.backup_targets, offline=offline
         ):
-            b4_backup.backup(src_host, dst_host, snapshot_name)
+            try:
+                b4_backup.backup(src_host, dst_host, snapshot_name)
+            except Exception as exc:
+                err_handler.add(exc)
 
 
 @app.command(name="list")

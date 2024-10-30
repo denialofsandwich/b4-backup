@@ -1,5 +1,4 @@
 from pathlib import PurePath
-from typing import Optional
 from unittest.mock import MagicMock, call, patch
 
 import arrow
@@ -334,7 +333,7 @@ def test_remove_target(
     src_host: SourceBackupTargetHost,
     monkeypatch: pytest.MonkeyPatch,
     exists: bool,
-    expect: Optional[str],
+    expect: str | None,
 ):
     # Arrange
     b4_backup = B4Backup("UTC")
@@ -371,7 +370,7 @@ def test_remove_target(
 )
 def test_generate_snapshot_name(
     monkeypatch: pytest.MonkeyPatch,
-    name: Optional[str],
+    name: str | None,
     expect: str,
 ):
     # Arrange
@@ -502,7 +501,7 @@ def test_create_fallback_subvolume(
     src_host: SourceBackupTargetHost,
     monkeypatch: pytest.MonkeyPatch,
     subvolume_path: PurePath,
-    existing_path: Optional[PurePath],
+    existing_path: PurePath | None,
     exists: list[bool],
     expect: list,
 ):
@@ -1131,7 +1130,7 @@ def test_apply_retention_rule(
     ],
 )
 def test_timebox_str_extract__success(
-    timebox: str, is_interval: bool, expect: tuple[int, Optional[str]]
+    timebox: str, is_interval: bool, expect: tuple[int, str | None]
 ):
     # Arrange
     b4_backup = B4Backup("UTC")

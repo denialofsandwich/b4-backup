@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Type
 from unittest.mock import MagicMock, call
 
 import paramiko
@@ -106,7 +105,7 @@ def test_url_from_url__invalid_url(test_input):
         ("ssh://main.example.com/b", connection.SSHConnection),
     ],
 )
-def test_connection_from_url(test_input: str, expected_type: Type):
+def test_connection_from_url(test_input: str, expected_type: type):
     # Act
     result = connection.Connection.from_url(test_input)
 

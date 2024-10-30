@@ -2,9 +2,9 @@ import contextlib
 import logging
 import shlex
 from abc import ABCMeta, abstractmethod
+from collections.abc import Generator, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import PurePath
-from typing import Generator, Iterable, Sequence
 
 from b4_backup import exceptions
 from b4_backup.config_schema import (

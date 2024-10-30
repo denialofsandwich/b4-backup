@@ -2,10 +2,10 @@ import json
 import logging
 import os
 import shlex
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import PurePath
-from typing import Generator
 
 import rich
 import typer
@@ -51,11 +51,38 @@ def complete_target(ctx: typer.Context, incomplete: str) -> Generator[str, None,
             yield target
 
 
+class ErrorHandler:
+    """Handles errors during execution."""
+
+    errors: list[Exception]
+
+    def __init__(self) -> None:  # noqa: D107
+        self.errors = []
+
+    def add(self, exc: Exception) -> None:
+        """
+        Add exception to list.
+
+        Args:
+            exc: Exception to add
+        """
+        log.exception(exc)
+        self.errors.append(exc)
+
+    def finalize(self) -> None:
+        """Raise errors if any exist."""
+        if self.errors:
+            raise ExceptionGroup("Errors during loop execution", self.errors)
+
+
 @contextmanager
 def error_handler():
     """A wrapper around the CLI error handler."""
     try:
-        yield None
+        err_handler = ErrorHandler()
+        yield err_handler
+        err_handler.finalize()
+
     except BaseBtrfsBackupError as exc:
         log.debug("An error occured (%s)", type(exc).__name__, exc_info=exc)
         rich.print(f"[red]An error occured ({type(exc).__name__})")

@@ -8,7 +8,7 @@ import textwrap
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Any, Optional
+from typing import Any
 
 import omegaconf
 from omegaconf import II, MISSING
@@ -103,7 +103,7 @@ class BackupTarget:
     """
 
     source: str
-    destination: Optional[str] = II(f"..{DEFAULT}.destination")
+    destination: str | None = II(f"..{DEFAULT}.destination")
     if_dst_dir_not_found: OnDestinationDirNotFound = II(f"..{DEFAULT}.if_dst_dir_not_found")
     restore_strategy: TargetRestoreStrategy = II(f"..{DEFAULT}.restore_strategy")
     src_snapshot_dir: Path = II(f"..{DEFAULT}.src_snapshot_dir")
