@@ -40,7 +40,10 @@ def test_basic_cmd(
         "host_generator",
         MagicMock(
             return_value=[
-                (MagicMock(), None if "no-destination" in extra_args else MagicMock()),
+                (
+                    None if "no-source" in extra_args else MagicMock(),
+                    None if "no-destination" in extra_args else MagicMock(),
+                ),
             ]
         ),
     )
@@ -61,6 +64,42 @@ def test_basic_cmd(
 
     assert fake_cmd.call_count == 1
     assert result.exit_code == 0
+
+
+@pytest.mark.parametrize(
+    ("cmd", "extra_args"),
+    [
+        ("backup", ""),
+        ("clean", ""),
+        ("restore", "alpha_manual"),
+    ],
+)
+def test_basic_cmd__host_required(
+    config: BaseConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    cmd: str,
+    extra_args: str,
+):
+    # Arrange
+    monkeypatch.setattr(utils, "load_config", MagicMock(return_value=config))
+    monkeypatch.setattr(
+        main,
+        "host_generator",
+        MagicMock(
+            return_value=[
+                (None, MagicMock()),
+            ]
+        ),
+    )
+
+    # Act
+    result = runner.invoke(
+        app, shlex.split(f"-c tests/config.yml {cmd} --target localhost/home {extra_args}")
+    )
+
+    # Assert
+    assert result.exit_code == 1
+    assert "requires source" in result.stdout
 
 
 def test_backup__error_group(
@@ -111,7 +150,10 @@ def test_list_snapshots(
         "host_generator",
         MagicMock(
             return_value=[
-                (MagicMock(), None if "no-destination" in extra_args else MagicMock()),
+                (
+                    None if "no-source" in extra_args else MagicMock(),
+                    None if "no-destination" in extra_args else MagicMock(),
+                ),
             ]
         ),
     )
@@ -162,15 +204,13 @@ def test_sync__error(
             ]
         ),
     )
-    fake_cmd = MagicMock()
-    monkeypatch.setattr(B4Backup, "sync", fake_cmd)
 
     # Act
     result = runner.invoke(app, shlex.split("-c tests/config.yml sync --target localhost/home"))
 
     # Assert
     assert result.exit_code == 1
-    assert "Sync requires a destination" in result.stdout
+    assert "Sync requires source and destination" in result.stdout
 
 
 def test_dump_config(

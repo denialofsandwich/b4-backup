@@ -392,7 +392,6 @@ class B4Backup:
         host: BackupTargetHost,
         retentions: Iterable[RetentionGroup],
     ) -> None:
-
         # We only want to clean the selected retention_names
         snapshots = self._filter_snapshots(host.snapshots(), [x.name for x in retentions])
 
@@ -549,7 +548,6 @@ class B4Backup:
     def _timebox_str_extract(
         self, timebox_str: str, is_interval: bool = False
     ) -> tuple[int, str | None]:
-
         if is_interval and timebox_str == "all":
             return 0, "all"
 

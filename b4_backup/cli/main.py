@@ -39,7 +39,7 @@ def backup(
         "--name",
         help="Name suffix (and retention ruleset) for this backup",
     ),
-    offline: bool = typer.Option(
+    source_only: bool = typer.Option(
         False,
         help="Perform actions on source side only",
     ),
@@ -54,9 +54,14 @@ def backup(
         snapshot_name = b4_backup.generate_snapshot_name(name)
 
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=offline
+            target_choice, config.backup_targets, use_destination=not source_only
         ):
             try:
+                if not src_host:
+                    raise exceptions.InvalidConnectionUrlError(  # noqa: TRY301
+                        "Backup requires source to be specified"
+                    )
+
                 b4_backup.backup(src_host, dst_host, snapshot_name)
             except Exception as exc:
                 err_handler.add(exc)
@@ -82,9 +87,12 @@ def list_snapshots(
     target_choice = ChoiceSelector(target or config.default_targets)
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=not destination
+            target_choice,
+            config.backup_targets,
+            use_source=source,
+            use_destination=destination,
         ):
-            if source:
+            if src_host:
                 OutputFormat.output(src_host.snapshots(), "Source", format)
             if dst_host:
                 OutputFormat.output(dst_host.snapshots(), "Destination", format)
@@ -101,7 +109,7 @@ def clean(
         autocompletion=complete_target,
         callback=validate_target,
     ),
-    offline: bool = typer.Option(
+    source_only: bool = typer.Option(
         False,
         help="Perform actions on source side only",
     ),
@@ -114,8 +122,11 @@ def clean(
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=offline
+            target_choice, config.backup_targets, use_destination=not source_only
         ):
+            if not src_host:
+                raise exceptions.InvalidConnectionUrlError("Clean requires source to be specified")
+
             b4_backup.clean(src_host, dst_host)
 
 
@@ -140,9 +151,9 @@ def delete(
     b4_backup = B4Backup(config.timezone)
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=not destination
+            target_choice, config.backup_targets, use_source=source, use_destination=destination
         ):
-            if source:
+            if src_host:
                 b4_backup.delete(src_host, snapshot_name)
             if dst_host:
                 b4_backup.delete(dst_host, snapshot_name)
@@ -186,9 +197,9 @@ def delete_all(
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=not destination
+            target_choice, config.backup_targets, use_source=source, use_destination=destination
         ):
-            if source:
+            if src_host:
                 b4_backup.delete_all(src_host, retention_names)
 
             if dst_host:
@@ -212,7 +223,7 @@ def restore(
         None,
         help="Restore strategy or procedure to apply",
     ),
-    offline: bool = typer.Option(
+    source_only: bool = typer.Option(
         False,
         help="Perform actions on source side only",
     ),
@@ -228,8 +239,13 @@ def restore(
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, offline=offline
+            target_choice, config.backup_targets, use_destination=not source_only
         ):
+            if not src_host:
+                raise exceptions.InvalidConnectionUrlError(
+                    "Restore requires source to be specified"
+                )
+
             target_strategy = strategy or src_host.target_config.restore_strategy
 
             b4_backup.restore(src_host, dst_host, snapshot_name, target_strategy)
@@ -255,9 +271,9 @@ def sync(
 
     with error_handler():
         for src_host, dst_host in host_generator(target_choice, config.backup_targets):
-            if not dst_host:
+            if not src_host or not dst_host:
                 raise exceptions.InvalidConnectionUrlError(
-                    "Sync requires a destination to be specified"
+                    "Sync requires source and destination to be specified"
                 )
 
             b4_backup.sync(src_host, dst_host)
@@ -272,6 +288,11 @@ def dump_config(ctx: typer.Context):
 
 # A collection of stuff I would like to improve
 
+## Tooling
+# TODO: Update dependencies
+# TODO: Replace isort, black with ruff
+# TODO: Replace poetry with uv
+
 ## Features
 # TODO: pre/post backup hooks
 #   - Option to execute code before and after an update
@@ -282,6 +303,7 @@ def dump_config(ctx: typer.Context):
 # - Auto create links to reference and terminology
 
 ## Visual CLI and logging improvements
+# TODO: b4 cmd without any options should show --help text
 # TODO: rich print_log function
 #   - To optionally print logs like a standard rich.print()
 #   - Will be in a seperate logger. Maybe b4_backup.print

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import contextlib
 import logging
 import re
 import shlex
@@ -41,7 +44,7 @@ class URL:
     _protocol_mapping = {"ssh": 22, None: 0}
 
     @classmethod
-    def from_url(cls, source: str) -> "URL":
+    def from_url(cls, source: str) -> URL:
         """
         Create an instance by providing an URL string.
 
@@ -86,11 +89,12 @@ class Connection(metaclass=ABCMeta):
             location: Target directory or file.
         """
         self.location = location
+        self.keep_open = False
 
         self.connected: bool = False
 
     @classmethod
-    def from_url(cls, url: str) -> "Connection":
+    def from_url(cls, url: str | None) -> Connection | contextlib.nullcontext:
         """
         Parse the URL and return a fitting connection instance.
 
@@ -100,6 +104,9 @@ class Connection(metaclass=ABCMeta):
         Returns:
             Connection instance
         """
+        if url is None:
+            return contextlib.nullcontext()
+
         parsed_url = URL.from_url(url)
 
         if parsed_url.protocol is None:
@@ -130,7 +137,7 @@ class Connection(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def open(self) -> "Connection":
+    def open(self) -> Connection:
         """
         Open the connection to the target host.
 
@@ -150,13 +157,14 @@ class Connection(metaclass=ABCMeta):
             Prefix to run commands on the target using local commands.
         """
 
-    def __enter__(self) -> "Connection":
+    def __enter__(self) -> Connection:
         """Entrypoint in a "with" statement."""
         return self.open()
 
     def __exit__(self, *args, **kwargs) -> None:
         """Endpoint in a "with" statement."""
-        self.close()
+        if not self.keep_open:
+            self.close()
 
 
 class LocalConnection(Connection):
@@ -196,13 +204,14 @@ class LocalConnection(Connection):
 
         return stdout
 
-    def open(self) -> "Connection":
+    def open(self) -> Connection:
         """
         Open the connection to the target host.
 
         Returns:
             Itself
         """
+        log.info("Opening local connection to %s", self.location)
         self.connected = True
 
         return self
@@ -224,6 +233,8 @@ class LocalConnection(Connection):
 
 class SSHConnection(Connection):
     """A connection wrapper to execute commands on remote machines via SSH."""
+
+    ssh_client_pool: dict[tuple[str, int, str], paramiko.SSHClient] = {}
 
     def __init__(
         self,
@@ -247,9 +258,7 @@ class SSHConnection(Connection):
         self.port = port
         self.user = user
         self.password = password
-
-        self._ssh_client: paramiko.SSHClient = paramiko.SSHClient()
-        self._ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self._ssh_client: paramiko.SSHClient | None
 
     def run_process(self, command: list[str]) -> str:
         """
@@ -260,6 +269,8 @@ class SSHConnection(Connection):
         Returns:
             stdout of process.
         """
+        assert self._ssh_client, "Not connected"
+
         log.debug("Start SSH process:\n%s", command)
 
         _stdin, stdout, stderr = self._ssh_client.exec_command(shlex.join(command))
@@ -271,29 +282,42 @@ class SSHConnection(Connection):
 
         return stdout_str
 
-    def open(self) -> "SSHConnection":
+    def open(self) -> SSHConnection:
         """
         Open the connection to the target host.
 
         Returns:
             Itself
         """
-        self._ssh_client.connect(
-            self.host,
-            username=self.user,
-            password=self.password,
-            port=self.port,
-        )
+        ssh_client = SSHConnection.ssh_client_pool.get((self.host, self.port, self.user), None)
+        if not ssh_client:
+            ssh_client = paramiko.SSHClient()
+            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            log.info("Opening ssh connection to %s@%s:%s", self.user, self.host, self.port)
+            ssh_client.connect(
+                self.host,
+                username=self.user,
+                password=self.password,
+                port=self.port,
+            )
+            SSHConnection.ssh_client_pool[(self.host, self.port, self.user)] = ssh_client
+
         self.connected = True
+        self._ssh_client = ssh_client
 
         return self
 
     def close(self) -> None:
         """Close the connection."""
         assert self.connected, "Connection already closed"
+        assert self._ssh_client
 
+        log.info("Closing ssh connection to %s %s", self.host, self.location)
         self._ssh_client.close()
+        del SSHConnection.ssh_client_pool[(self.host, self.port, self.user)]
         self.connected = False
+        self._ssh_client = None
 
     @property
     def exec_prefix(self) -> str:

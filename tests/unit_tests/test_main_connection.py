@@ -1,3 +1,4 @@
+import contextlib
 from pathlib import Path
 from unittest.mock import MagicMock, call
 
@@ -103,6 +104,7 @@ def test_url_from_url__invalid_url(test_input):
     [
         ("/opt/backups", connection.LocalConnection),
         ("ssh://main.example.com/b", connection.SSHConnection),
+        (None, contextlib.nullcontext),
     ],
 )
 def test_connection_from_url(test_input: str, expected_type: type):
@@ -128,6 +130,43 @@ def test_open_ssh_connection(monkeypatch: pytest.MonkeyPatch):
         ...
 
     # Assert
+    assert isinstance(paramiko.SSHClient, MagicMock)
+    paramiko.SSHClient: MagicMock  # type: ignore  # noqa: B032
+
+    assert paramiko.SSHClient.called is True
+
+    fake_ssh = paramiko.SSHClient()
+    assert fake_ssh.connect.call_args == call(
+        "example.com",
+        username="root",
+        password=None,
+        port=22,
+    )
+
+
+def test_open_ssh_connection__keep_open(monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    monkeypatch.setattr(paramiko, "SSHClient", MagicMock())
+
+    # Act
+    con1 = connection.SSHConnection(host="example.com", location=Path("/test"))
+    con1.keep_open = True
+    with con1 as _con:
+        ...
+
+    # Assert 1
+    assert con1._ssh_client.close.called is False  # type: ignore
+    assert con1._ssh_client.connect.call_count == 1  # type: ignore
+    assert len(con1.ssh_client_pool) == 1
+
+    con2 = connection.SSHConnection(host="example.com", location=Path("/test2"))
+    with con2 as _con:
+        assert con2._ssh_client.connect.call_count == 1  # type: ignore
+
+    # Assert 2
+    assert con2._ssh_client is None  # type: ignore
+    assert len(con2.ssh_client_pool) == 0
+
     assert isinstance(paramiko.SSHClient, MagicMock)
     paramiko.SSHClient: MagicMock  # type: ignore  # noqa: B032
 

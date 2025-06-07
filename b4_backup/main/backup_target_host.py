@@ -2,6 +2,7 @@ import contextlib
 import logging
 import shlex
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 from collections.abc import Generator, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import PurePath
@@ -12,7 +13,7 @@ from b4_backup.config_schema import (
     OnDestinationDirNotFound,
     SubvolumeBackupStrategy,
 )
-from b4_backup.main.connection import Connection, LocalConnection
+from b4_backup.main.connection import Connection, LocalConnection, SSHConnection
 from b4_backup.main.dataclass import BackupHostPath, ChoiceSelector, Snapshot
 from b4_backup.utils import contains_path
 
@@ -485,48 +486,92 @@ class DestinationBackupTargetHost(BackupTargetHost):
         return "destination"
 
 
+def _connection_sort_key(
+    pair: tuple[str, Connection | contextlib.nullcontext, Connection | contextlib.nullcontext],
+):
+    def conn_key(conn):
+        if isinstance(conn, LocalConnection):
+            return (1,)
+        elif isinstance(conn, SSHConnection):
+            return (2, conn.host, conn.port, conn.user)
+        else:
+            return (0,)
+
+    return (conn_key(pair[1]), conn_key(pair[2]))
+
+
+def _mark_keep_open(
+    pairs: list[
+        tuple[str, Connection | contextlib.nullcontext, Connection | contextlib.nullcontext]
+    ],
+):
+    connection_groups: dict[tuple[str, int, str], list[SSHConnection]] = defaultdict(list)
+
+    for _name, a, b in pairs:
+        for conn in (a, b):
+            if isinstance(conn, SSHConnection):
+                key = (conn.host, conn.port, conn.user)
+                connection_groups[key].append(conn)
+
+    for conns in connection_groups.values():
+        for conn in conns[:-1]:
+            conn.keep_open = True
+
+
 def host_generator(
     target_choice: ChoiceSelector,
     backup_targets: dict[str, BackupTarget],
     *,
-    offline: bool = False,
-) -> Generator[tuple[SourceBackupTargetHost, DestinationBackupTargetHost | None], None, None]:
+    use_source: bool = True,
+    use_destination: bool = True,
+) -> Generator[
+    tuple[SourceBackupTargetHost | None, DestinationBackupTargetHost | None], None, None
+]:
     """
     Creates a generator containing connected TargetHosts for source and destination.
 
     Args:
         target_choice: A ChoiceSelector list of targets to be used
         backup_targets: A dict containing all targets available
-        offline: If true, the destination host will be omitted
+        use_source: If false, the source host will be omitted
+        use_destination: If false, the destination host will be omitted
 
     Returns:
         A tuple containing source and destination TargetHosts
     """
     target_names = target_choice.resolve_target(backup_targets)
+    target_connections = sorted(
+        (
+            (
+                target_name,
+                Connection.from_url(backup_targets[target_name].source if use_source else None),
+                Connection.from_url(
+                    backup_targets[target_name].destination if use_destination else None
+                ),
+            )
+            for target_name in target_names
+        ),
+        key=_connection_sort_key,
+    )
+    _mark_keep_open(target_connections)
 
-    for target_name in target_names:
+    for target_name, source, destination in target_connections:
         log.info("Backup target: %s", target_name)
-        target = backup_targets[target_name]
-
-        source = Connection.from_url(target.source)
-        destination = contextlib.nullcontext()
-        if target.destination and not offline:
-            destination = Connection.from_url(target.destination)
-        else:
-            log.info("Skipped connection to destination host")
 
         with source as src_con, destination as dst_con:
-            src_host = BackupTargetHost.from_source_host(
-                target_name=target_name,
-                target_config=target,
-                connection=src_con,
-            )
+            src_host = None
+            if src_con:
+                src_host = BackupTargetHost.from_source_host(
+                    target_name=target_name,
+                    target_config=backup_targets[target_name],
+                    connection=src_con,
+                )
 
             dst_host = None
             if dst_con:
                 dst_host = BackupTargetHost.from_destination_host(
                     target_name=target_name,
-                    target_config=target,
+                    target_config=backup_targets[target_name],
                     connection=dst_con,
                 )
 

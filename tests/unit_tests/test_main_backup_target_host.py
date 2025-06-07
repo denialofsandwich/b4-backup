@@ -1,3 +1,4 @@
+import contextlib
 import textwrap
 from pathlib import Path, PurePath
 from unittest.mock import MagicMock, call
@@ -10,9 +11,11 @@ from b4_backup.main.backup_target_host import (
     BackupTargetHost,
     DestinationBackupTargetHost,
     SourceBackupTargetHost,
+    _connection_sort_key,
+    _mark_keep_open,
     host_generator,
 )
-from b4_backup.main.connection import LocalConnection
+from b4_backup.main.connection import Connection, LocalConnection, SSHConnection
 from b4_backup.main.dataclass import ChoiceSelector, Snapshot
 
 
@@ -640,6 +643,54 @@ class TestDestinationBackupTargetHost:
         assert result == "destination"
 
 
+@pytest.mark.parametrize(
+    ("pair", "expected_result"),
+    [
+        (("", contextlib.nullcontext(), LocalConnection(PurePath("/test"))), ((0,), (1,))),
+        (
+            (
+                "",
+                SSHConnection("example.com", PurePath("/test")),
+                LocalConnection(PurePath("/test")),
+            ),
+            ((2, "example.com", 22, "root"), (1,)),
+        ),
+    ],
+)
+def test_connection_sort_key(
+    pair: tuple[str, Connection | contextlib.nullcontext, Connection | contextlib.nullcontext],
+    expected_result,
+):
+    # Act
+    result = _connection_sort_key(pair)
+
+    # Assert
+    assert result == expected_result
+
+
+def test_mark_keep_open():
+    # Arrange
+    pairs = [
+        (
+            "",
+            SSHConnection("example.com", PurePath("/test")),
+            LocalConnection(PurePath("/test")),
+        ),
+        (
+            "",
+            SSHConnection("example.com", PurePath("/test2")),
+            LocalConnection(PurePath("/test")),
+        ),
+    ]
+
+    # Act
+    _mark_keep_open(pairs)  # type: ignore
+
+    # Assert
+    assert pairs[0][1].keep_open is True
+    assert pairs[1][1].keep_open is False
+
+
 def test_host_generator(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     monkeypatch.setattr(BackupTargetHost, "_mount_point", MagicMock(return_value=Path("/mnt")))
@@ -655,16 +706,20 @@ def test_host_generator(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     assert isinstance(result[0][1], DestinationBackupTargetHost)
 
 
-def test_host_generator__offline(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
+def test_host_generator__use_nothing(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     monkeypatch.setattr(BackupTargetHost, "_mount_point", MagicMock(return_value=Path("/mnt")))
     target_choice = ChoiceSelector(["localhost/mnt"])
 
     # Act
-    result = list(host_generator(target_choice, config.backup_targets, offline=True))
+    result = list(
+        host_generator(
+            target_choice, config.backup_targets, use_source=False, use_destination=False
+        )
+    )
 
     # Assert
     print(result)
     assert len(result) == 1
-    assert isinstance(result[0][0], SourceBackupTargetHost)
     assert result[0][1] is None
+    assert result[0][0] is None

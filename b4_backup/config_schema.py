@@ -11,7 +11,7 @@ from pathlib import Path, PurePath
 from typing import Any
 
 import omegaconf
-from omegaconf import II, MISSING
+from omegaconf import II
 
 DEFAULT = "_default"
 
@@ -102,7 +102,7 @@ class BackupTarget:
         subvolume_rules: Contains rules for how to handle the subvolumes of a target
     """
 
-    source: str
+    source: str | None = II(f"..{DEFAULT}.source")
     destination: str | None = II(f"..{DEFAULT}.destination")
     if_dst_dir_not_found: OnDestinationDirNotFound = II(f"..{DEFAULT}.if_dst_dir_not_found")
     restore_strategy: TargetRestoreStrategy = II(f"..{DEFAULT}.restore_strategy")
@@ -128,7 +128,7 @@ class BaseConfig:
     backup_targets: dict[str, BackupTarget] = field(
         default_factory=lambda: {
             DEFAULT: BackupTarget(
-                source=MISSING,
+                source=None,
                 destination=None,
                 if_dst_dir_not_found=OnDestinationDirNotFound.CREATE,
                 restore_strategy=TargetRestoreStrategy.SAFE,
