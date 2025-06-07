@@ -9,7 +9,10 @@ import typer
 
 from b4_backup import utils
 
-app = typer.Typer(pretty_exceptions_enable=False)
+app = typer.Typer(
+    pretty_exceptions_enable=False,
+    no_args_is_help=True,
+)
 
 
 def _version_callback(value: bool):

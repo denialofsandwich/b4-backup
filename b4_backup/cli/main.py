@@ -289,8 +289,6 @@ def dump_config(ctx: typer.Context):
 # A collection of stuff I would like to improve
 
 ## Tooling
-# TODO: Update dependencies
-# TODO: Replace isort, black with ruff
 # TODO: Replace poetry with uv
 
 ## Features
