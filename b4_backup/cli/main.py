@@ -80,7 +80,7 @@ def list_snapshots(
     ),
     source: bool = typer.Option(False, help="List snapshots on source host"),
     destination: bool = typer.Option(False, help="List snapshots on destination host"),
-    format: OutputFormat = typer.Option(OutputFormat.RICH, help="Output format"),
+    format: OutputFormat = typer.Option(OutputFormat.RICH.value, help="Output format"),
 ):
     """List all snapshots for the specified targets."""
     config: BaseConfig = ctx.obj

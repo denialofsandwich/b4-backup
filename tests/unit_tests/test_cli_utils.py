@@ -92,7 +92,7 @@ def test_error_handler__error(error: Exception):
 
 
 @pytest.mark.parametrize(
-    "format, expect",
+    ("format", "expect"),
     [
         (cli_utils.OutputFormat.RICH, None),
         (
