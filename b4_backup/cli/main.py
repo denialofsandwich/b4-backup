@@ -2,12 +2,12 @@
 
 import logging
 
-import rich
 import typer
 from rich import prompt
 
 from b4_backup import exceptions
 from b4_backup.cli.init import app
+from b4_backup.cli.tools import app as tools_app
 from b4_backup.cli.utils import (
     OutputFormat,
     complete_target,
@@ -20,6 +20,8 @@ from b4_backup.main.backup_target_host import host_generator
 from b4_backup.main.dataclass import ChoiceSelector
 
 log = logging.getLogger("b4_backup.cli")
+
+app.add_typer(tools_app, name="tools")
 
 
 @app.command()
@@ -218,8 +220,7 @@ def restore(
         autocompletion=complete_target,
         callback=validate_target,
     ),
-    strategy: TargetRestoreStrategy
-    | None = typer.Option(
+    strategy: TargetRestoreStrategy | None = typer.Option(
         None,
         help="Restore strategy or procedure to apply",
     ),
@@ -277,13 +278,6 @@ def sync(
                 )
 
             b4_backup.sync(src_host, dst_host)
-
-
-@app.command()
-def dump_config(ctx: typer.Context):
-    """Return the fully interpolated configuration. For debugging."""
-    config: BaseConfig = ctx.obj
-    rich.print(config)
 
 
 # A collection of stuff I would like to improve

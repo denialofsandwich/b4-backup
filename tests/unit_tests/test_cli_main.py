@@ -211,17 +211,3 @@ def test_sync__error(
     # Assert
     assert result.exit_code == 1
     assert "Sync requires source and destination" in result.stdout
-
-
-def test_dump_config(
-    config: BaseConfig,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    # Arrange
-    monkeypatch.setattr(utils, "load_config", MagicMock(return_value=config))
-
-    # Act
-    result = runner.invoke(app, shlex.split("-c tests/config.yml dump-config"))
-
-    # Assert
-    assert result.exit_code == 0
