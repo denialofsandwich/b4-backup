@@ -33,7 +33,7 @@ def dump_config(ctx: typer.Context):
 def update_config(  # pragma: no cover
     ctx: typer.Context,
     new_targets: str = typer.Argument(..., help="JSON object containing 'target_name: source'"),
-    dry_run: bool = typer.Argument(
+    dry_run: bool = typer.Option(
         False, help="Just print the new config instead of actually updating the config file"
     ),
 ):
@@ -77,6 +77,8 @@ def update_config(  # pragma: no cover
                 config_yaml["backup_targets"][target_name]["source"] = None
             else:
                 del config_yaml["backup_targets"][target_name]
+
+        config_yaml["default_targets"] = list(new_target_objs)
 
         strio = io.StringIO()
         yaml.dump(config_yaml, strio)
