@@ -171,6 +171,7 @@ jobs:
       - python_base
       - test_python
       - pre-commit
+      - build_python
     environment:
       name: main
       url: https://pypi.org/p/b4-backup
