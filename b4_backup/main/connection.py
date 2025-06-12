@@ -292,6 +292,7 @@ class SSHConnection(Connection):
         ssh_client = SSHConnection.ssh_client_pool.get((self.host, self.port, self.user), None)
         if not ssh_client:
             ssh_client = paramiko.SSHClient()
+            ssh_client.load_system_host_keys()
             ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
             log.info("Opening ssh connection to %s@%s:%s", self.user, self.host, self.port)
