@@ -15,6 +15,7 @@ from rich.syntax import Syntax
 from b4_backup import config_schema
 from b4_backup.cli import utils
 from b4_backup.main import backup_target_host, dataclass
+from b4_backup.main.b4_backup import B4Backup
 
 log = logging.getLogger("b4_backup.cli")
 
@@ -36,6 +37,7 @@ def update_config(  # pragma: no cover
     dry_run: bool = typer.Option(
         False, help="Just print the new config instead of actually updating the config file"
     ),
+    delete_source: bool = typer.Option(False, help="Delete all backups on source side"),
 ):
     """Updates the b4 config based on the new targets list parameter.
 
@@ -52,6 +54,7 @@ def update_config(  # pragma: no cover
     yaml = YAML()
 
     config: config_schema.BaseConfig = ctx.obj
+    b4_backup = B4Backup(config.timezone)
 
     with utils.error_handler():
         config_yaml = yaml.load(config.config_path)
@@ -72,7 +75,24 @@ def update_config(  # pragma: no cover
             else:
                 config_yaml["backup_targets"][target_name] = {"source": source}
 
-        for target_name in set(passive_targets.keys() - new_target_objs.keys()):
+        old_targets = list(passive_targets.keys() - new_target_objs.keys())
+        old_targets_choice = dataclass.ChoiceSelector(old_targets)
+        for src_host, _none in backup_target_host.host_generator(
+            old_targets_choice,
+            config.backup_targets,
+            use_destination=False,
+        ):
+            if src_host is None:
+                continue
+
+            target_name = src_host.name
+
+            if delete_source:
+                log.info("Removing all backups on source side")
+
+                if not dry_run:
+                    b4_backup.delete_all(src_host)
+
             if passive_targets[target_name] > 0:
                 config_yaml["backup_targets"][target_name]["source"] = None
             else:
