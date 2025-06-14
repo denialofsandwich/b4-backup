@@ -77,26 +77,22 @@ def update_config(  # pragma: no cover
 
         old_targets = list(passive_targets.keys() - new_target_objs.keys())
         old_targets_choice = dataclass.ChoiceSelector(old_targets)
-        for src_host, _none in backup_target_host.host_generator(
-            old_targets_choice,
-            config.backup_targets,
-            use_destination=False,
+        for src_host, dst_host in backup_target_host.host_generator(
+            old_targets_choice, config.backup_targets
         ):
-            if src_host is None:
+            if not dst_host:
                 continue
 
-            target_name = src_host.name
-
-            if delete_source:
+            if delete_source and src_host:
                 log.info("Removing all backups on source side")
 
                 if not dry_run:
                     b4_backup.delete_all(src_host)
 
-            if passive_targets[target_name] > 0:
-                config_yaml["backup_targets"][target_name]["source"] = None
+            if passive_targets[dst_host.name] > 0:
+                config_yaml["backup_targets"][dst_host.name]["source"] = None
             else:
-                del config_yaml["backup_targets"][target_name]
+                del config_yaml["backup_targets"][dst_host.name]
 
         config_yaml["default_targets"] = list(new_target_objs)
 
