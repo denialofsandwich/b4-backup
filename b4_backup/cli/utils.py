@@ -5,8 +5,10 @@ import shlex
 from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
-from pathlib import PurePath
+from pathlib import Path, PurePath
+from typing import Any
 
+import click
 import rich
 import typer
 from rich.table import Table
@@ -32,10 +34,66 @@ def validate_target(ctx: typer.Context, values: list[str]) -> list[str]:
     return values
 
 
+def _parse_arg(param: click.Argument | click.Option, args: list[str]) -> Any | list[Any]:
+    args = list(args)
+    parsed_arg = []
+
+    if not any(opt in args for opt in param.opts):
+        return param.default
+
+    while any(opt in args for opt in param.opts):
+        for opt in param.opts:
+            if opt not in args:
+                continue
+
+            idx = args.index(opt)
+            value = args[idx + 1]
+
+            # Hacky conversion, because I just don't get what's going on in these click types
+            if isinstance(param.type, click.types.Path):
+                value = Path(value)
+
+            parsed_arg.append(value)
+            del args[idx]
+            del args[idx]
+
+    if param.multiple:
+        return parsed_arg
+
+    return parsed_arg[-1]
+
+
+def parse_callback_args(app: typer.Typer, args: list[str]) -> dict[str, Any]:
+    """
+    Extract and parse args from the callback function.
+
+    This function is a workaround to this issue:
+    https://github.com/tiangolo/typer/issues/259
+    tl;dr: Callback is not called before autocomplete functions, so we need to do it manually
+
+    Args:
+        app: Typer CLI instance
+        args: Raw cli args
+
+    Returns:
+        Parsed parameters from callback
+    """
+    assert app.registered_callback is not None
+    params = typer.main.get_params_convertors_ctx_param_name_from_function(
+        app.registered_callback.callback
+    )[0]
+
+    parsed_args = {}
+    for param in params:
+        parsed_args[param.name] = _parse_arg(param, args)
+
+    return parsed_args
+
+
 def complete_target(ctx: typer.Context, incomplete: str) -> Generator[str, None, None]:
     """A handler to provide autocomplete for target types."""
     args = shlex.split(os.getenv("_TYPER_COMPLETE_ARGS", ""))
-    parsed_args = utils.parse_callback_args(app, args)
+    parsed_args = parse_callback_args(app, args)
     init(ctx, **parsed_args)
     config: BaseConfig = ctx.obj
 

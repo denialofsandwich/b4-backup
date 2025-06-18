@@ -1,4 +1,5 @@
 import contextlib
+import tempfile
 import textwrap
 from pathlib import Path, PurePath
 from unittest.mock import MagicMock, call
@@ -82,7 +83,7 @@ class TestBackupTargetHost:
             """
             /dev/sda1 on /boot type ext4 (rw,relatime)
             /dev/sda3 on / type btrfs (rw,relatime,discard=async,space_cache=v2,subvolid=5,subvol=/)
-        """
+            """
         )
         monkeypatch.setattr(
             dst_host.connection, "run_process", MagicMock(return_value=mount_result)
@@ -104,7 +105,7 @@ class TestBackupTargetHost:
             """
             /dev/sda1 on /boot type ext4 (rw,relatime)
             /dev/sda3 on /idontexist type btrfs (rw,relatime,discard=async,space_cache=v2,subvolid=5,subvol=/)
-        """
+            """
         )
         monkeypatch.setattr(
             dst_host.connection, "run_process", MagicMock(return_value=mount_result)
@@ -123,12 +124,11 @@ class TestBackupTargetHost:
         run_process_result = textwrap.dedent(
             """
             ID 256 gen 621187 top_level 5 path alpha/bravo
-        """
+            """
         )
         monkeypatch.setattr(
             src_host.connection, "run_process", MagicMock(return_value=run_process_result)
         )
-        monkeypatch.setattr(src_host, "mount_point", MagicMock(return_value=src_host.path("/opt")))
 
         # Act
         result = src_host.subvolumes()
@@ -136,6 +136,34 @@ class TestBackupTargetHost:
 
         # Assert
         assert result == [PurePath("/opt"), PurePath("/opt/alpha/bravo")]
+
+    def test_remove_empty_dirs(
+        self,
+        src_host: BackupTargetHost,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        # Arrange
+        with tempfile.TemporaryDirectory() as _tmp_dir:
+            tmp_dir = Path(_tmp_dir)
+            subvolumes = [tmp_dir / "a/subvol"]
+            monkeypatch.setattr(
+                src_host,
+                "subvolumes",
+                MagicMock(return_value=[src_host.path(x) for x in subvolumes]),
+            )
+            for dir in ["a/", "a/subvol", "a/test"]:
+                (tmp_dir / dir).mkdir()
+                (tmp_dir / "file.txt").touch()
+
+            # Act
+            result = src_host.remove_empty_dirs(src_host.path(tmp_dir))
+            print(result)
+
+            # Assert
+            assert result is False
+            assert not (tmp_dir / "a/test").exists()
+            assert (tmp_dir / "a/subvol").exists()
+            assert (tmp_dir / "file.txt").exists()
 
     def test_group_subvolumes(self, src_host: BackupTargetHost):
         # Arrange

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from rich.logging import RichHandler
 
-from b4_backup import cli, utils
+from b4_backup import utils
 
 
 def test_rich_handler():
@@ -62,35 +62,6 @@ def test_load_config_existing(config_path: Path):
         "localhost/home",
         "localhost/root",
         "localhost/mnt",
-    }
-
-
-def test_parse_callback_args():
-    # Act
-    parsed_args = utils.parse_callback_args(
-        cli.app,
-        ["b4", "-c", "ignored", "-c", "b4_backup.yml", "--option", "value1", "-o", "value2"],
-    )
-
-    # Assert
-    print(parsed_args)
-    assert parsed_args == {
-        "config_path": Path("b4_backup.yml"),
-        "options": ["value1", "value2"],
-        "_version": False,
-    }
-
-
-def test_parse_callback_args__default_args():
-    # Act
-    parsed_args = utils.parse_callback_args(cli.app, ["bb"])
-
-    # Assert
-    print(parsed_args)
-    assert parsed_args == {
-        "config_path": Path("~/.config/b4_backup.yml"),
-        "options": [],
-        "_version": False,
     }
 
 

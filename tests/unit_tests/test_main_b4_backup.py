@@ -130,7 +130,7 @@ def test_clean(src_host: SourceBackupTargetHost, monkeypatch: pytest.MonkeyPatch
     b4_backup = B4Backup("UTC")
     monkeypatch.setattr(b4_backup, "_clean_target", MagicMock())
     monkeypatch.setattr(b4_backup, "_clean_replace", MagicMock())
-    monkeypatch.setattr(b4_backup, "_rollback_replace", MagicMock())
+    monkeypatch.setattr(b4_backup, "_clean_empty_dirs", MagicMock())
 
     # Act
     b4_backup.clean(src_host)
@@ -933,6 +933,21 @@ def test_clean_replace(
 
     # Assert
     assert [str(x.args[1]) for x in fake_src_rem_repl_targets.call_args_list] == expect
+
+
+@pytest.mark.parametrize(("use_dst_host"), [True, False])
+def test_clean_empty_dirs(use_dst_host: bool):
+    # Arrange
+    b4_backup = B4Backup("UTC")
+    fake_src_host = MagicMock()
+    fake_dst_host = MagicMock()
+
+    # Act
+    b4_backup._clean_empty_dirs(fake_src_host, fake_dst_host if use_dst_host else None)
+
+    # Assert
+    assert fake_src_host.remove_empty_dirs.called
+    assert fake_dst_host.remove_empty_dirs.called == use_dst_host
 
 
 def test_remove_replaced_targets(

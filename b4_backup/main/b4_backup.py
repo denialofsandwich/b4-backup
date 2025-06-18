@@ -142,6 +142,7 @@ class B4Backup:
         """
         self._clean_target(src_host, dst_host, retention_names)
         self._clean_replace(src_host)
+        self._clean_empty_dirs(src_host, dst_host)
 
     def delete(
         self,
@@ -454,6 +455,15 @@ class B4Backup:
                 continue
 
             self._remove_replaced_targets(host, replaced_target)
+
+    def _clean_empty_dirs(
+        self,
+        src_host: SourceBackupTargetHost,
+        dst_host: DestinationBackupTargetHost | None,
+    ) -> None:
+        src_host.remove_empty_dirs(src_host.snapshot_dir)
+        if dst_host:
+            dst_host.remove_empty_dirs(dst_host.path())
 
     def _remove_replaced_targets(
         self, host: SourceBackupTargetHost, replaced_target: PurePath

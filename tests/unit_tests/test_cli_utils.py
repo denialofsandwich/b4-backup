@@ -1,11 +1,11 @@
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from unittest.mock import MagicMock
 
 import pytest
 import typer
 from click import Command
 
-from b4_backup import exceptions, utils
+from b4_backup import cli, exceptions, utils
 from b4_backup.cli import utils as cli_utils
 from b4_backup.config_schema import BaseConfig
 from b4_backup.main.dataclass import Snapshot
@@ -21,6 +21,35 @@ def test_validate_target__success(config: BaseConfig):
 
     # Assert
     assert result == ["localhost/home"]
+
+
+def test_parse_callback_args():
+    # Act
+    parsed_args = cli_utils.parse_callback_args(
+        cli.app,
+        ["b4", "-c", "ignored", "-c", "b4_backup.yml", "--option", "value1", "-o", "value2"],
+    )
+
+    # Assert
+    print(parsed_args)
+    assert parsed_args == {
+        "config_path": Path("b4_backup.yml"),
+        "options": ["value1", "value2"],
+        "_version": False,
+    }
+
+
+def test_parse_callback_args__default_args():
+    # Act
+    parsed_args = cli_utils.parse_callback_args(cli.app, ["bb"])
+
+    # Assert
+    print(parsed_args)
+    assert parsed_args == {
+        "config_path": Path("~/.config/b4_backup.yml"),
+        "options": [],
+        "_version": False,
+    }
 
 
 def test_validate_target__error(config: BaseConfig):

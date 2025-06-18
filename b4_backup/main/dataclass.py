@@ -79,6 +79,11 @@ class BackupHostPath(PurePosixPath):
 
         return [self / x for x in result]
 
+    def is_dir(self) -> bool:
+        """Checks if a path is a directory."""
+        result = self.connection.run_process(["ls", "-dl", str(self)])
+        return result.strip()[0] == "d"
+
 
 @dataclass(frozen=True)
 class Snapshot:

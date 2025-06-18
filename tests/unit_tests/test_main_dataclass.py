@@ -1,3 +1,4 @@
+import contextlib
 from pathlib import PurePath
 from unittest.mock import MagicMock
 
@@ -17,10 +18,12 @@ from b4_backup.main.dataclass import (
 class TestBackupHostPath:
     def test_basic(self):
         # Arrange
+        connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         pure_path = PurePath("a/b/c")
         host_path = BackupHostPath(
             "a/b",
-            connection=Connection.from_url("/opt"),
+            connection=connection,
         )
 
         # Act
@@ -39,6 +42,7 @@ class TestBackupHostPath:
     def test_rmdir(self, data, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock(side_effect=data)
         monkeypatch.setattr(connection, "run_process", fake_run_process)
         host_path = BackupHostPath("a/b/c", connection=connection)
@@ -53,6 +57,7 @@ class TestBackupHostPath:
     def test_rmdir__error(self, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock(
             side_effect=exceptions.FailedProcessError(["rmdir", "bla"]),
         )
@@ -75,6 +80,7 @@ class TestBackupHostPath:
     def test_exists(self, data, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock(side_effect=data)
         monkeypatch.setattr(connection, "run_process", fake_run_process)
         host_path = BackupHostPath("a/b/c", connection=connection)
@@ -89,6 +95,7 @@ class TestBackupHostPath:
     def test_exists__error(self, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock(
             side_effect=exceptions.FailedProcessError(["ls", "-d", "bla"]),
         )
@@ -102,6 +109,7 @@ class TestBackupHostPath:
     def test_mkdir(self, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock()
         monkeypatch.setattr(connection, "run_process", fake_run_process)
         host_path = BackupHostPath("a/b/c", connection=connection)
@@ -116,6 +124,7 @@ class TestBackupHostPath:
     def test_rename(self, monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock()
         monkeypatch.setattr(connection, "run_process", fake_run_process)
         host_path = BackupHostPath("a/b/c", connection=connection)
@@ -137,6 +146,7 @@ class TestBackupHostPath:
     def test_iterdir(self, data: str, expect: list[PurePath], monkeypatch: pytest.MonkeyPatch):
         # Arrange
         connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
         fake_run_process = MagicMock(return_value=data)
         monkeypatch.setattr(connection, "run_process", fake_run_process)
         host_path = BackupHostPath("a/b", connection=connection)
@@ -150,6 +160,22 @@ class TestBackupHostPath:
 
         assert all(isinstance(x, BackupHostPath) for x in result)
         assert set(result) == set(expect)
+
+    @pytest.mark.parametrize(("data", "expect"), [("dxxxxxxx", True), ("-xxxxxxxx", False)])
+    def test_is_dir(self, data: str, expect: bool, monkeypatch: pytest.MonkeyPatch):
+        # Arrange
+        connection = Connection.from_url("/opt")
+        assert not isinstance(connection, contextlib.nullcontext)
+        fake_run_process = MagicMock(return_value=data)
+        monkeypatch.setattr(connection, "run_process", fake_run_process)
+        host_path = BackupHostPath("a/b/c", connection=connection)
+
+        # Act
+        result = host_path.is_dir()
+
+        # Assert
+        print(fake_run_process.call_args_list)
+        assert result == expect
 
 
 class TestSnapshot:

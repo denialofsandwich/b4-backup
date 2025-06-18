@@ -168,6 +168,33 @@ class BackupTargetHost(metaclass=ABCMeta):
             + [mount_point]
         )
 
+    def remove_empty_dirs(
+        self, path: BackupHostPath, _subvolumes: set[BackupHostPath] | None = None
+    ) -> bool:
+        """
+        Recursively delete empty directories.
+
+        Returns:
+            True if the top dir got deleted.
+        """
+        if _subvolumes is None:
+            _subvolumes = set(self.subvolumes())
+
+        empty = True
+        for subpath in path.iterdir():
+            if (
+                subpath in _subvolumes
+                or not subpath.is_dir()
+                or not self.remove_empty_dirs(subpath, _subvolumes=_subvolumes)
+            ):
+                empty = False
+
+        if empty:
+            log.debug("Removing empty dir: %s", path)
+            path.rmdir()
+
+        return empty
+
     def _group_subvolumes(
         self, subvolumes: Sequence[BackupHostPath], parent_dir: BackupHostPath
     ) -> dict[str, list[BackupHostPath]]:
