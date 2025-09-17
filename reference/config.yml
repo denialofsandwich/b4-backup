@@ -1,0 +1,115 @@
+backup_targets:
+  _default:
+    destination: null
+    dst_retention:
+      _default:
+        all: forever
+      auto:
+        1day: 1month
+        1month: infinity
+        1week: 1year
+    if_dst_dir_not_found: CREATE
+    replaced_target_ttl: 24hours
+    restore_strategy: SAFE
+    source: null
+    src_retention:
+      _default:
+        all: '1'
+      auto:
+        all: 7days
+    src_snapshot_dir: &id001 .b4_backup
+    subvolume_rules:
+      /:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      _default:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        backup_strategy: IGNORE
+        fallback_strategy: DROP
+  local/data:
+    destination: null
+    dst_retention: {}
+    if_dst_dir_not_found: CREATE
+    replaced_target_ttl: 24hours
+    restore_strategy: SAFE
+    source: /opt/data
+    src_retention: {}
+    src_snapshot_dir: *id001
+    subvolume_rules:
+      /:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      _default:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        backup_strategy: IGNORE
+        fallback_strategy: DROP
+  localhost/test:
+    destination: null
+    dst_retention: {}
+    if_dst_dir_not_found: CREATE
+    replaced_target_ttl: 24hours
+    restore_strategy: SAFE
+    source: ssh://root@localhost/opt/test
+    src_retention: {}
+    src_snapshot_dir: *id001
+    subvolume_rules:
+      /:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      _default:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        backup_strategy: IGNORE
+        fallback_strategy: DROP
+  main.example.com/b:
+    destination: null
+    dst_retention: {}
+    if_dst_dir_not_found: CREATE
+    replaced_target_ttl: 24hours
+    restore_strategy: SAFE
+    source: ssh://root@main.example.com:990/b
+    src_retention: {}
+    src_snapshot_dir: *id001
+    subvolume_rules:
+      /:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      _default:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        backup_strategy: IGNORE
+        fallback_strategy: DROP
+  main.example.com/home:
+    destination: null
+    dst_retention:
+      auto:
+        all: 3days
+    if_dst_dir_not_found: CREATE
+    replaced_target_ttl: 24hours
+    restore_strategy: SAFE
+    source: ssh://root@main.example.com/home
+    src_retention: {}
+    src_snapshot_dir: *id001
+    subvolume_rules:
+      /:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      _default:
+        backup_strategy: FULL
+        fallback_strategy: DROP
+      rootfs/var/lib/docker/btrfs/subvolumes:
+        backup_strategy: IGNORE
+        fallback_strategy: DROP
+config_path: ~/.config/b4_backup.yml
+default_targets: []
+logging:
+  loggers:
+    root:
+      level: INFO
+timezone: utc
