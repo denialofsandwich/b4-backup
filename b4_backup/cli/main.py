@@ -278,34 +278,3 @@ def sync(
                 )
 
             b4_backup.sync(src_host, dst_host)
-
-
-# A collection of stuff I would like to improve
-
-## Tooling
-# TODO: Replace poetry with uv
-
-## Features
-# TODO: pre/post backup hooks
-#   - Option to execute code before and after an update
-#     Would be handy for enabling maintanance mode during an update
-
-## Documentation
-# TODO: Docs
-# - Auto create links to reference and terminology
-
-## Visual CLI and logging improvements
-# TODO: b4 cmd without any options should show --help text
-# TODO: rich print_log function
-#   - To optionally print logs like a standard rich.print()
-#   - Will be in a seperate logger. Maybe b4_backup.print
-#   - Subvolume transmission info (Bytes transfered, duration, rate)
-
-# TODO: List snapshots flags
-#   - Show status of snapshot for example: stale, async
-
-# TODO: b4 switch command to switch to version:
-#   - b4 switch source to go to the source directory if available
-#   - Needs to be executed using "cd $(b4 switch 2024-05-21-14-41-10_manual)"
-#   - A better approach would be a modification in bashrc/zshrc
-#   - Implement autocomplete for snapshots
