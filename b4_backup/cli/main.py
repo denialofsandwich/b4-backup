@@ -231,7 +231,7 @@ def restore(
 ):
     """
     Restore one or more targets based on a previously created snapshot.
-    You can revert a REPLACE restore by using REPLACE als snapshot name and strategy.
+    You can revert a REPLACE restore by using REPLACE as snapshot name and strategy.
     """
     config: BaseConfig = ctx.obj
     target_choice = ChoiceSelector(target or config.default_targets)
