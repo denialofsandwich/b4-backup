@@ -8,69 +8,41 @@ on:
     types: [published]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  python_base:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-      - run: pip install poetry==1.8.3
-      - run: poetry config virtualenvs.in-project true
-      - name: Setup caching
-        uses: actions/cache@v4
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install
-
   test_python:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
-    needs:
-      - python_base
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install poetry==1.8.3
-      - run: poetry config virtualenvs.in-project true
-      - name: Setup caching
-        uses: actions/cache@v4
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked
 
       - name: Run tests
-        run: poetry run pytest --cov-report=term --cov-report=html
+        run: uv run pytest --cov-report=term --cov-report=html
 
-      - name: Upload pytest test coverage
+      - name: Prepare coverage dir
+        run: |
+          mkdir -p coverage/${{ matrix.python-version }}
+          mv htmlcov/* coverage/${{ matrix.python-version }}/
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-results-${{ matrix.python-version }}
-          path: htmlcov/
+          name: coverage-${{ matrix.python-version }}
+          path: coverage/
 
   pre-commit:
     runs-on: ubuntu-latest
-    needs:
-      - python_base
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,32 +50,34 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install pre-commit
-        run: pip install pre-commit poetry==1.8.3
+        run: pip install pre-commit uv
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
       - name: Run pre-commit
         run: pre-commit run --all
 
   build_python:
     runs-on: ubuntu-latest
-    needs:
-      - python_base
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install poetry==1.8.3
-      - run: poetry config virtualenvs.in-project true
-      - name: Setup caching
-        uses: actions/cache@v4
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked --no-dev
 
       - name: Build package
-        run: poetry build
+        run: uv build
+
       - name: Upload package artifacts
         if: github.event_name == 'release'
         uses: actions/upload-artifact@v4
@@ -112,63 +86,51 @@ jobs:
           path: dist/
 
   deploy_docs:
-    if: github.event_name == 'push'
+    if: |
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs:
-      - python_base
       - test_python
       - pre-commit
     steps:
       - uses: actions/checkout@v4
-
-      # That's an ugly solution, but I need to copy this block for every supported python version
-      - name: Download 3.12 artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: pytest-results-3.12
-          path: docs/htmlcov/v3.12
-      - name: Download 3.13 artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: pytest-results-3.13
-          path: docs/htmlcov/v3.13
-
-      - name: Configure Git Credentials
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install poetry==1.8.3
-      - run: poetry config virtualenvs.in-project true
-      - name: Setup venv cache
-        uses: actions/cache@v4
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('poetry.lock') }}
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked
 
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v4
+      - name: Download coverages
+        uses: actions/download-artifact@v4
         with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-material-
-      - run: poetry run python docs/gen_badges.py
-      - run: poetry run python docs/gen_reference_code.py
-      - run: poetry run python docs/gen_reference_config.py
-      - run: poetry run typer b4_backup/__main__.py utils docs --name b4 --title "CLI reference" --output docs/reference/cli.md
-      - run: poetry run mkdocs gh-deploy --force
+          pattern: coverage-*
+          path: docs/htmlcov
+          merge-multiple: true
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - run: uv run python docs/gen_badges.py
+      - run: uv run python docs/gen_reference_code.py
+      - run: uv run python docs/gen_reference_config.py
+      - run: uv run typer b4_backup/__main__.py utils docs --name b4 --title "CLI reference" --output docs/reference/cli.md
+
+      - name: Docs dry-run
+        if: github.event_name == 'pull_request'
+        run: uv run mkdocs build --strict
+      - name: Deploy docs
+        if: github.event_name == 'push' && github.ref_name == 'main'
+        run: uv run mkdocs gh-deploy --force
 
   release_python:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     needs:
-      - python_base
       - test_python
       - pre-commit
       - build_python
