@@ -14,7 +14,7 @@ from b4_backup.config_schema import (
     SubvolumeBackupStrategy,
 )
 from b4_backup.main.connection import Connection, LocalConnection, SSHConnection
-from b4_backup.main.dataclass import BackupHostPath, ChoiceSelector, Snapshot
+from b4_backup.main.dataclass import BackupHostPath, Snapshot
 from b4_backup.utils import contains_path
 
 log = logging.getLogger("b4_backup.main")
@@ -546,7 +546,7 @@ def _mark_keep_open(
 
 
 def host_generator(
-    target_choice: ChoiceSelector,
+    target_names: list[str],
     backup_targets: dict[str, BackupTarget],
     *,
     use_source: bool = True,
@@ -558,7 +558,7 @@ def host_generator(
     Creates a generator containing connected TargetHosts for source and destination.
 
     Args:
-        target_choice: A ChoiceSelector list of targets to be used
+        target_names: List of targets to be used
         backup_targets: A dict containing all targets available
         use_source: If false, the source host will be omitted
         use_destination: If false, the destination host will be omitted
@@ -566,7 +566,6 @@ def host_generator(
     Returns:
         A tuple containing source and destination TargetHosts
     """
-    target_names = target_choice.resolve_target(backup_targets)
     target_connections = sorted(
         (
             (

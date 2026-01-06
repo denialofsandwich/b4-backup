@@ -11,6 +11,7 @@ import rich
 import typer
 from omegaconf import OmegaConf
 from rich.syntax import Syntax
+from ruamel.yaml import YAML
 
 from b4_backup import config_schema
 from b4_backup.cli import utils
@@ -49,8 +50,6 @@ def update_config(  # pragma: no cover
 
     ruaml.yaml required.
     """
-    from ruamel.yaml import YAML
-
     yaml = YAML()
 
     config: config_schema.BaseConfig = ctx.obj
@@ -60,11 +59,13 @@ def update_config(  # pragma: no cover
         config_yaml = yaml.load(config.config_path)
         new_target_objs = json.loads(new_targets)
 
-        target_choice = dataclass.ChoiceSelector(list(config.backup_targets))
+        targets = dataclass.TargetSelector(list(config.backup_targets)).resolve(
+            config.backup_targets
+        )
         passive_targets = {
             dst_host.name: len(dst_host.snapshots())
             for _none, dst_host in backup_target_host.host_generator(
-                target_choice, config.backup_targets, use_source=False
+                targets, config.backup_targets, use_source=False
             )
             if dst_host
         }
@@ -76,9 +77,9 @@ def update_config(  # pragma: no cover
                 config_yaml["backup_targets"][target_name] = {"source": source}
 
         old_targets = list(passive_targets.keys() - new_target_objs.keys())
-        old_targets_choice = dataclass.ChoiceSelector(old_targets)
+        old_targets = dataclass.TargetSelector(old_targets).resolve(config.backup_targets)
         for src_host, dst_host in backup_target_host.host_generator(
-            old_targets_choice, config.backup_targets
+            old_targets, config.backup_targets
         ):
             if not dst_host:
                 continue
