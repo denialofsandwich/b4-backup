@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: System",
     "Natural Language :: English",
     "Typing :: Typed",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -30,6 +30,7 @@ dependencies = [
     "typer>=0.16.0",
     "paramiko>=3.2.0",
     "arrow>=1.2.3",
+    "ruamel-yaml>=0.19.1",
 ]
 
 [project.scripts]
@@ -62,7 +63,7 @@ profile = "black"
 line-length = 100
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 100
 lint.select = [
     "E",   # pycodestyle errors
