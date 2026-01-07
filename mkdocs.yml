@@ -49,10 +49,6 @@ plugins:
       default_handler: python
       handlers:
         python:
-          import:
-            - https://docs.python.org/3/objects.inv
-            - https://mkdocstrings.github.io/objects.inv
-            - https://mkdocstrings.github.io/griffe/objects.inv
           options:
             show_source: true
             show_root_full_path: false
