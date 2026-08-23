@@ -14,8 +14,8 @@ from b4_backup.main.backup_target_host import (
 )
 from b4_backup.main.dataclass import (
     BackupHostPath,
-    ChoiceSelector,
     RetentionGroup,
+    RetentionNameSelector,
     Snapshot,
 )
 
@@ -183,7 +183,7 @@ def test_delete__error(src_host: SourceBackupTargetHost, monkeypatch: pytest.Mon
 
 def test_delete_all(src_host: SourceBackupTargetHost, monkeypatch: pytest.MonkeyPatch):
     # Arrange
-    retention_name_choice = ChoiceSelector(["test"])
+    retention_name_choice = RetentionNameSelector(["test"])
     b4_backup = B4Backup("UTC")
     fake_delete_snapshot = MagicMock()
     monkeypatch.setattr(src_host, "delete_snapshot", fake_delete_snapshot)
@@ -636,7 +636,7 @@ def test_clean_target(
 ):
     # Arrange
     b4_backup = B4Backup("UTC")
-    retention_name_choice = ChoiceSelector(["test_clean"])
+    retention_name_choice = RetentionNameSelector(["test_clean"])
     monkeypatch.setattr(
         arrow,
         "utcnow",

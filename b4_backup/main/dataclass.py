@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from os import PathLike
@@ -8,13 +10,14 @@ from b4_backup import exceptions
 from b4_backup.config_schema import DEFAULT, BackupTarget
 
 if TYPE_CHECKING:  # pragma: no cover
+    from b4_backup.main.backup_target_host import BackupTargetHost
     from b4_backup.main.connection import Connection
 
 
 class BackupHostPath(PurePosixPath):
     """Represents a path for a Connection."""
 
-    def __init__(self, *segments: str | PathLike[str], connection: "Connection"):
+    def __init__(self, *segments: str | PathLike[str], connection: Connection):
         """
         Args:
             segments: segments of the path
@@ -67,7 +70,7 @@ class BackupHostPath(PurePosixPath):
         """
         self.connection.run_process(["mv", str(self), str(target)])
 
-    def iterdir(self) -> list["BackupHostPath"]:
+    def iterdir(self) -> list[BackupHostPath]:
         """
         Returns:
             A list of Paths containing all items in the current directory.
@@ -98,7 +101,7 @@ class Snapshot:
     @classmethod
     def from_new(
         cls, name: str, subvolumes: list[BackupHostPath], base_path: BackupHostPath
-    ) -> "Snapshot":
+    ) -> Snapshot:
         """
         Create instance from the backup target location.
 
@@ -176,7 +179,7 @@ class RetentionGroup:
         target: BackupTarget,
         is_source: bool = True,
         obsolete_snapshots: set[str] | None = None,
-    ) -> "RetentionGroup":
+    ) -> RetentionGroup:
         """
         Create an instance from a target and ruleset name.
 
@@ -201,9 +204,9 @@ class RetentionGroup:
 
 
 @dataclass(frozen=True)
-class ChoiceSelector:
+class TargetSelector:
     """
-    Describes a set of data, with dynamic choices.
+    Describes a set of data, with dynamic targets.
 
     Attributes:
         data: Contains the actual data
@@ -211,7 +214,7 @@ class ChoiceSelector:
 
     data: list[str] = field(default_factory=list)
 
-    def resolve_target(self, targets: Iterable[str]) -> list[str]:
+    def resolve(self, targets: Iterable[str]) -> list[str]:
         """
         Resolves a target selector and returns a list based on the selection.
 
@@ -230,7 +233,19 @@ class ChoiceSelector:
 
         return list(expanded_data - {"_default"})
 
-    def resolve_retention_name(self, snapshot_names: Iterable[str]) -> list[str]:
+
+@dataclass(frozen=True)
+class RetentionNameSelector:
+    """
+    Describes a set of data, with dynamic retention_names.
+
+    Attributes:
+        data: Contains the actual data
+    """
+
+    data: list[str] = field(default_factory=list)
+
+    def resolve(self, host: BackupTargetHost) -> list[str]:
         """
         Resolves a retention_name selector and returns a list based on the selection.
 
@@ -238,6 +253,6 @@ class ChoiceSelector:
             List of resolved items
         """
         if self.data == ["ALL"]:
-            return list({x.split("_", maxsplit=1)[1] for x in snapshot_names})
+            return list({x.split("_", maxsplit=1)[1] for x in host.snapshots()})
 
         return self.data

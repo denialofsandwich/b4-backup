@@ -5,7 +5,7 @@
         <img src="https://img.shields.io/github/actions/workflow/status/denialofsandwich/b4-backup/test_and_release.yml?label=pipeline"></a>
     <a href="https://pypi.org/project/b4-backup">
         <img src="https://denialofsandwich.github.io/b4-backup/badges/python.svg"></a>
-    <a href="https://denialofsandwich.github.io/b4-backup/htmlcov/v3.13">
+    <a href="https://denialofsandwich.github.io/b4-backup/htmlcov/3.12">
         <img src="https://denialofsandwich.github.io/b4-backup/badges/coverage.svg"></a>
 </p>
 

@@ -17,7 +17,7 @@ from b4_backup.cli.utils import (
 from b4_backup.config_schema import BaseConfig, TargetRestoreStrategy
 from b4_backup.main.b4_backup import B4Backup
 from b4_backup.main.backup_target_host import host_generator
-from b4_backup.main.dataclass import ChoiceSelector
+from b4_backup.main.dataclass import RetentionNameSelector, TargetSelector
 
 log = logging.getLogger("b4_backup.cli")
 
@@ -48,7 +48,7 @@ def backup(
 ):
     """Perform backups on specified targets. If no target is specified, the default targets defined in the config will be used."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
 
     b4_backup = B4Backup(config.timezone)
 
@@ -56,7 +56,7 @@ def backup(
         snapshot_name = b4_backup.generate_snapshot_name(name)
 
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, use_destination=not source_only
+            targets, config.backup_targets, use_destination=not source_only
         ):
             try:
                 if not src_host:
@@ -86,10 +86,10 @@ def list_snapshots(
 ):
     """List all snapshots for the specified targets."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice,
+            targets,
             config.backup_targets,
             use_source=source,
             use_destination=destination,
@@ -118,13 +118,13 @@ def clean(
 ):
     """Apply the targets retention ruleset without performing a backup."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
 
     b4_backup = B4Backup(config.timezone)
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, use_destination=not source_only
+            targets, config.backup_targets, use_destination=not source_only
         ):
             if not src_host:
                 raise exceptions.InvalidConnectionUrlError("Clean requires source to be specified")
@@ -149,11 +149,11 @@ def delete(
 ):
     """Delete a specific snapshot from the source and/or destination."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
     b4_backup = B4Backup(config.timezone)
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, use_source=source, use_destination=destination
+            targets, config.backup_targets, use_source=source, use_destination=destination
         ):
             if src_host:
                 b4_backup.delete(src_host, snapshot_name)
@@ -184,13 +184,13 @@ def delete_all(
 ):
     """Delete all local and remote backups of the specified target/retention ruleset combination. Equivalent to an "all: 0" rule."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
-    retention_names = ChoiceSelector(retention)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
+    retention_names = RetentionNameSelector(retention)
 
     log.warning(
         "You are about to DELETE all snapshots with these retention_names (%s) for these targets: %s",
         ", ".join(retention),
-        ", ".join(target_choice.resolve_target(config.backup_targets)),
+        ", ".join(targets),
     )
     if not force and not prompt.Confirm.ask("Continue"):
         raise typer.Exit(1)
@@ -199,7 +199,7 @@ def delete_all(
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, use_source=source, use_destination=destination
+            targets, config.backup_targets, use_source=source, use_destination=destination
         ):
             if src_host:
                 b4_backup.delete_all(src_host, retention_names)
@@ -231,16 +231,16 @@ def restore(
 ):
     """
     Restore one or more targets based on a previously created snapshot.
-    You can revert a REPLACE restore by using REPLACE als snapshot name and strategy.
+    You can revert a REPLACE restore by using REPLACE as snapshot name and strategy.
     """
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
 
     b4_backup = B4Backup(config.timezone)
 
     with error_handler():
         for src_host, dst_host in host_generator(
-            target_choice, config.backup_targets, use_destination=not source_only
+            targets, config.backup_targets, use_destination=not source_only
         ):
             if not src_host:
                 raise exceptions.InvalidConnectionUrlError(
@@ -266,46 +266,15 @@ def sync(
 ):
     """Send pending snapshots to the destination."""
     config: BaseConfig = ctx.obj
-    target_choice = ChoiceSelector(target or config.default_targets)
+    targets = TargetSelector(target or config.default_targets).resolve(config.backup_targets)
 
     b4_backup = B4Backup(config.timezone)
 
     with error_handler():
-        for src_host, dst_host in host_generator(target_choice, config.backup_targets):
+        for src_host, dst_host in host_generator(targets, config.backup_targets):
             if not src_host or not dst_host:
                 raise exceptions.InvalidConnectionUrlError(
                     "Sync requires source and destination to be specified"
                 )
 
             b4_backup.sync(src_host, dst_host)
-
-
-# A collection of stuff I would like to improve
-
-## Tooling
-# TODO: Replace poetry with uv
-
-## Features
-# TODO: pre/post backup hooks
-#   - Option to execute code before and after an update
-#     Would be handy for enabling maintanance mode during an update
-
-## Documentation
-# TODO: Docs
-# - Auto create links to reference and terminology
-
-## Visual CLI and logging improvements
-# TODO: b4 cmd without any options should show --help text
-# TODO: rich print_log function
-#   - To optionally print logs like a standard rich.print()
-#   - Will be in a seperate logger. Maybe b4_backup.print
-#   - Subvolume transmission info (Bytes transfered, duration, rate)
-
-# TODO: List snapshots flags
-#   - Show status of snapshot for example: stale, async
-
-# TODO: b4 switch command to switch to version:
-#   - b4 switch source to go to the source directory if available
-#   - Needs to be executed using "cd $(b4 switch 2024-05-21-14-41-10_manual)"
-#   - A better approach would be a modification in bashrc/zshrc
-#   - Implement autocomplete for snapshots

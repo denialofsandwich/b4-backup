@@ -9,9 +9,10 @@ from b4_backup.config_schema import BaseConfig
 from b4_backup.main.connection import Connection
 from b4_backup.main.dataclass import (
     BackupHostPath,
-    ChoiceSelector,
     RetentionGroup,
+    RetentionNameSelector,
     Snapshot,
+    TargetSelector,
 )
 
 
@@ -304,10 +305,10 @@ class TestChoiceSelector:
     )
     def test_choice_selector_resolve_target(self, data: list[str], expect: list[str]):
         # Arrange
-        selector = ChoiceSelector(data)
+        selector = TargetSelector(data)
 
         # Act
-        result = selector.resolve_target(["a/b", "a/c", "b", "c", "d"])
+        result = selector.resolve(["a/b", "a/c", "b", "c", "d"])
 
         # Assert
         assert set(result) == set(expect)
@@ -322,19 +323,19 @@ class TestChoiceSelector:
     )
     def test_choice_selector_resolve_retention_name(self, data: list[str], expect: list[str]):
         # Arrange
-        selector = ChoiceSelector(data)
+        selector = RetentionNameSelector(data)
+        fake_host = MagicMock()
+        fake_host.snapshots.return_value = [
+            "2024-05-26-15-32-24_alpha",
+            "2024-05-26-16-32-24_bravo",
+            "2024-05-26-17-32-24_bravo",
+            "2024-05-26-18-32-24_charlie",
+            "2024-05-26-19-32-24_charlie",
+            "2024-05-26-20-32-24_charlie",
+        ]
 
         # Act
-        result = selector.resolve_retention_name(
-            [
-                "2024-05-26-15-32-24_alpha",
-                "2024-05-26-16-32-24_bravo",
-                "2024-05-26-17-32-24_bravo",
-                "2024-05-26-18-32-24_charlie",
-                "2024-05-26-19-32-24_charlie",
-                "2024-05-26-20-32-24_charlie",
-            ]
-        )
+        result = selector.resolve(fake_host)
 
         # Assert
         assert set(result) == set(expect)

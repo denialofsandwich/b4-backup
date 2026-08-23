@@ -19,8 +19,8 @@ from b4_backup.main.backup_target_host import (
 )
 from b4_backup.main.dataclass import (
     BackupHostPath,
-    ChoiceSelector,
     RetentionGroup,
+    RetentionNameSelector,
     Snapshot,
 )
 
@@ -64,7 +64,7 @@ class B4Backup:
         if dst_host:
             src_host.send_snapshot(dst_host, snapshot_name)
 
-        retention_name = ChoiceSelector([self._extract_retention_name(snapshot_name)])
+        retention_name = RetentionNameSelector([self._extract_retention_name(snapshot_name)])
         self.clean(
             src_host=src_host,
             dst_host=dst_host,
@@ -130,7 +130,7 @@ class B4Backup:
         self,
         src_host: SourceBackupTargetHost,
         dst_host: DestinationBackupTargetHost | None = None,
-        retention_names: ChoiceSelector = ChoiceSelector(["ALL"]),
+        retention_names: RetentionNameSelector = RetentionNameSelector(["ALL"]),
     ) -> None:
         """
         Apply a retention ruleset on the selected targets.
@@ -167,7 +167,7 @@ class B4Backup:
     def delete_all(
         self,
         host: BackupTargetHost,
-        retention_names: ChoiceSelector = ChoiceSelector(["ALL"]),
+        retention_names: RetentionNameSelector = RetentionNameSelector(["ALL"]),
     ) -> None:
         """
         Delete all snapshots from a specific target/host/retention item.
@@ -176,7 +176,7 @@ class B4Backup:
             host: the selected target host
             retention_names: The retention names the snapshots have to contain
         """
-        resolved_retention_names = set(retention_names.resolve_retention_name(host.snapshots()))
+        resolved_retention_names = set(retention_names.resolve(host))
 
         for snapshot_name, snapshot in host.snapshots().items():
             if self._extract_retention_name(snapshot_name) not in resolved_retention_names:
@@ -347,12 +347,12 @@ class B4Backup:
         self,
         src_host: SourceBackupTargetHost,
         dst_host: DestinationBackupTargetHost | None,
-        retention_names: ChoiceSelector,
+        retention_names: RetentionNameSelector,
     ) -> None:
         src_retentions: list[RetentionGroup] = []
         src_dst_retentions: list[RetentionGroup] = []
         dst_retentions: list[RetentionGroup] = []
-        for retention_name in retention_names.resolve_retention_name(src_host.snapshots()):
+        for retention_name in retention_names.resolve(src_host):
             src_retentions.append(
                 RetentionGroup.from_target(
                     retention_name=retention_name,
@@ -371,7 +371,7 @@ class B4Backup:
             )
 
         if dst_host:
-            for retention_name in retention_names.resolve_retention_name(dst_host.snapshots()):
+            for retention_name in retention_names.resolve(dst_host):
                 dst_retentions.append(
                     RetentionGroup.from_target(
                         retention_name=retention_name,

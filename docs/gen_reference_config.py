@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 
 from b4_backup.config_schema import (
     BaseConfig,
-    OnDestinationDirNotFound,
+    DestinationFallbackStrategy,
     SubvolumeBackupStrategy,
     SubvolumeFallbackStrategy,
     TargetRestoreStrategy,
@@ -26,7 +26,7 @@ yaml.add_representer(pathlib.PosixPath, _path_representer)
 yaml.add_representer(TargetRestoreStrategy, _enum_representer)
 yaml.add_representer(SubvolumeFallbackStrategy, _enum_representer)
 yaml.add_representer(SubvolumeBackupStrategy, _enum_representer)
-yaml.add_representer(OnDestinationDirNotFound, _enum_representer)
+yaml.add_representer(DestinationFallbackStrategy, _enum_representer)
 
 base_conf = OmegaConf.merge(
     OmegaConf.structured(BaseConfig),

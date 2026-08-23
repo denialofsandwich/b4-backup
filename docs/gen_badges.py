@@ -44,7 +44,7 @@ versions = []
 coverage = []
 for path in Path("docs/htmlcov").glob("*"):
     print(path)
-    versions.append(path.name[1:])
+    versions.append(path.name)
     coverage.append(_extract_coverage((path / "index.html").read_text()))
 
 _create_badge_coverage(int(sum(coverage) / len(coverage)))

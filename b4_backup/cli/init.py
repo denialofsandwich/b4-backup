@@ -1,5 +1,6 @@
 """Contains the base part of the CLI."""
 
+import importlib.metadata
 import logging.config
 from pathlib import Path
 
@@ -17,8 +18,6 @@ app = typer.Typer(
 
 def _version_callback(value: bool):
     if value:
-        import importlib.metadata
-
         typer.echo(importlib.metadata.version("b4_backup"))
         raise typer.Exit()
 

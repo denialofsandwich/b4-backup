@@ -17,7 +17,7 @@ from b4_backup.main.backup_target_host import (
     host_generator,
 )
 from b4_backup.main.connection import Connection, LocalConnection, SSHConnection
-from b4_backup.main.dataclass import ChoiceSelector, Snapshot
+from b4_backup.main.dataclass import Snapshot, TargetSelector
 
 
 class TestBackupTargetHost:
@@ -722,10 +722,10 @@ def test_mark_keep_open():
 def test_host_generator(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     monkeypatch.setattr(BackupTargetHost, "_mount_point", MagicMock(return_value=Path("/mnt")))
-    target_choice = ChoiceSelector(["localhost/mnt"])
+    targets = TargetSelector(["localhost/mnt"]).resolve(config.backup_targets)
 
     # Act
-    result = list(host_generator(target_choice, config.backup_targets))
+    result = list(host_generator(targets, config.backup_targets))
 
     # Assert
     print(result)
@@ -737,13 +737,11 @@ def test_host_generator(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
 def test_host_generator__use_nothing(config: BaseConfig, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     monkeypatch.setattr(BackupTargetHost, "_mount_point", MagicMock(return_value=Path("/mnt")))
-    target_choice = ChoiceSelector(["localhost/mnt"])
+    targets = TargetSelector(["localhost/mnt"]).resolve(config.backup_targets)
 
     # Act
     result = list(
-        host_generator(
-            target_choice, config.backup_targets, use_source=False, use_destination=False
-        )
+        host_generator(targets, config.backup_targets, use_source=False, use_destination=False)
     )
 
     # Assert
