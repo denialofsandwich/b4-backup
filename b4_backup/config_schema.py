@@ -59,7 +59,7 @@ class SubvolumeFallbackStrategy(str, Enum):
     KEEP = "keep"
 
 
-class OnDestinationDirNotFound(str, Enum):
+class DestinationFallbackStrategy(str, Enum):
     """
     How to behave, if the destination directory does not exist.
 
@@ -104,7 +104,7 @@ class BackupTarget:
 
     source: str | None = II(f"..{DEFAULT}.source")
     destination: str | None = II(f"..{DEFAULT}.destination")
-    if_dst_dir_not_found: OnDestinationDirNotFound = II(f"..{DEFAULT}.if_dst_dir_not_found")
+    if_dst_dir_not_found: DestinationFallbackStrategy = II(f"..{DEFAULT}.if_dst_dir_not_found")
     restore_strategy: TargetRestoreStrategy = II(f"..{DEFAULT}.restore_strategy")
     src_snapshot_dir: Path = II(f"..{DEFAULT}.src_snapshot_dir")
     src_retention: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -130,7 +130,7 @@ class BaseConfig:
             DEFAULT: BackupTarget(
                 source=None,
                 destination=None,
-                if_dst_dir_not_found=OnDestinationDirNotFound.CREATE,
+                if_dst_dir_not_found=DestinationFallbackStrategy.CREATE,
                 restore_strategy=TargetRestoreStrategy.SAFE,
                 src_snapshot_dir=Path(".b4_backup"),
                 src_retention={DEFAULT: {"all": "1"}},

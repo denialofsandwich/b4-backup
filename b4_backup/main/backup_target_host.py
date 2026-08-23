@@ -10,7 +10,7 @@ from pathlib import PurePath
 from b4_backup import exceptions
 from b4_backup.config_schema import (
     BackupTarget,
-    OnDestinationDirNotFound,
+    DestinationFallbackStrategy,
     SubvolumeBackupStrategy,
 )
 from b4_backup.main.connection import Connection, LocalConnection, SSHConnection
@@ -97,7 +97,7 @@ class BackupTargetHost(metaclass=ABCMeta):
         )
 
         if (
-            target_config.if_dst_dir_not_found == OnDestinationDirNotFound.FAIL
+            target_config.if_dst_dir_not_found == DestinationFallbackStrategy.FAIL
             and not host.path().exists()
         ):
             raise exceptions.DestinationDirectoryNotFoundError(
