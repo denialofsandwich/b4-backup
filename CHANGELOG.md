@@ -6,6 +6,7 @@
 
 ### 🚜 Refactor
 
+- *(pre-commit)* Remove pre-commit hook type
 - *(config)* [**breaking**] Update OnDestinationDirNotFound case
 - *(pre-commit)* Update pre-commit hook versions and add conventional commit hook
 - *(core)* Update ChoiceSelector to be more readable
